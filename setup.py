@@ -28,6 +28,7 @@ setup(
         'contrail_api_cli.command': [
             'hello = contrail_api_cli_extra.hello:Hello',
             'addsas = contrail_api_cli_extra.service_appliance_set:AddSAS',
+            'setglobalasn = contrail_api_cli_extra.global_asn:SetGlobalASN',
         ]
     },
     classifiers=[
