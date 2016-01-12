@@ -32,6 +32,7 @@ setup(
             'add-dns-nameserver = contrail_api_cli_extra.dns_nameserver:AddDnsNameserver',
             'add-bgp-router = contrail_api_cli_extra.bgp_router:AddBGPRouter',
             'del-bgp-router = contrail_api_cli_extra.bgp_router:DelBGPRouter',
+            'linklocal = contrail_api_cli_extra.linklocal:Linklocal',
         ]
     },
     classifiers=[

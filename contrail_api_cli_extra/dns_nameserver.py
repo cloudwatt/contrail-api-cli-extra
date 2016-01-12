@@ -7,10 +7,13 @@ from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import CommandError
 
+from .utils import ip_type
+
 
 class AddDnsNameserver(Command):
     nameserver_ips = Arg(nargs="*", metavar='nameserver',
-                         help='IPs of DNS servers', default=[])
+                         help='IPs of DNS servers', default=[],
+                         type=ip_type)
     network_ipam_fqname = Arg('--network-ipam-fqname',
                               metavar='fqname',
                               help='Network IPAM fqname (default: %(default)s)',
