@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
 
