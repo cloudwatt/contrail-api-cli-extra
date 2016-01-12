@@ -30,6 +30,8 @@ setup(
             'add-sas = contrail_api_cli_extra.service_appliance_set:AddSAS',
             'setglobalasn = contrail_api_cli_extra.global_asn:SetGlobalASN',
             'add-dns-nameserver = contrail_api_cli_extra.dns_nameserver:AddDnsNameserver',
+            'add-bgp-router = contrail_api_cli_extra.bgp_router:AddBGPRouter',
+            'del-bgp-router = contrail_api_cli_extra.bgp_router:DelBGPRouter',
         ]
     },
     classifiers=[
