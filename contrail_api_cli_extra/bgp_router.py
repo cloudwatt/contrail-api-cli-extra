@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from netaddr import IPNetwork
-from six import text_type
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.exceptions import CommandError
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.utils import FQName
+
+from .utils import ip_type, port_type, RouteTargetAction
 
 ADDRESS_FAMILIES = ['route-target', 'inet-vpn', 'e-vpn', 'erm-vpn',
                     'inet6-vpn']
@@ -17,10 +17,10 @@ DEFAULT_RI_FQ_NAME = ['default-domain', 'default-project', 'ip-fabric',
 class AddBGPRouter(Command):
     description = "Add BgpRouter to the API server"
     router_name = Arg(help="BGP router name")
-    router_ip = Arg('--router-ip', help="BGP router IP")
+    router_ip = Arg('--router-ip', help="BGP router IP", type=ip_type)
     router_port = Arg('--router-port', help="BGP port (default: %(default)s)",
-                      type=int, default=179)
-    router_asn = Arg('--router-asn', type=int, default=64512,
+                      type=port_type, default=179)
+    router_asn = Arg('--router-asn', type=RouteTargetAction.asn_type, default=64512,
                      help="Autonomous System Number (default: %(default)s)")
     router_type = Arg('--router-type', default='contrail',
                       help="BGP router type ('contrail' for Contrail control \
@@ -52,12 +52,12 @@ class AddBGPRouter(Command):
         if router_type != 'contrail' and 'erm-vpn' in router_address_families:
             router_address_families.remove('erm-vpn')
         router_parameters = {
-            'address': text_type(IPNetwork(router_ip).ip),
+            'address': router_ip,
             'address_families': {
                 'family': router_address_families
             },
             'autonomous_system': router_asn,
-            'identifier': text_type(IPNetwork(router_ip).ip),
+            'identifier': router_ip,
             'port': router_port,
             'vendor': router_type
         }
