@@ -28,7 +28,7 @@ setup(
         'contrail_api_cli.command': [
             'hello = contrail_api_cli_extra.hello:Hello',
             'add-sas = contrail_api_cli_extra.service_appliance_set:AddSAS',
-            'setglobalasn = contrail_api_cli_extra.global_asn:SetGlobalASN',
+            'set-global-asn = contrail_api_cli_extra.global_asn:SetGlobalASN',
             'add-dns-nameserver = contrail_api_cli_extra.dns_nameserver:AddDnsNameserver',
         ]
     },
