@@ -43,6 +43,8 @@ setup(
             'del-vrouter = contrail_api_cli_extra.vrouter:DelVRouter',
             'add-config = contrail_api_cli_extra.config:AddConfig',
             'del-config = contrail_api_cli_extra.config:DelConfig',
+            'add-analytics = contrail_api_cli_extra.analytics:AddAnalytics',
+            'del-analytics = contrail_api_cli_extra.analytics:DelAnalytics',
         ]
     },
     classifiers=[
