@@ -26,7 +26,7 @@ class RouteTargetAction(argparse.Action):
         ret_values = []
         for value in unique_values:
             ret_values.append(RouteTargetAction.route_target_type(value))
-        setattr(namespace, self.dest, list(ret_values))
+        setattr(namespace, self.dest, ret_values)
 
     @staticmethod
     def asn_type(value):
