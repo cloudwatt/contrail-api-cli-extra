@@ -34,6 +34,7 @@ setup(
             'del-bgp-router = contrail_api_cli_extra.bgp_router:DelBGPRouter',
             'linklocal = contrail_api_cli_extra.linklocal:Linklocal',
             'route-target = contrail_api_cli_extra.route_target:RouteTarget',
+            'set-encaps = contrail_api_cli_extra.encapsulation:SetEncapsulation',
         ]
     },
     classifiers=[
