@@ -13,7 +13,9 @@ class SAS(Command):
 
 class AddSAS(SAS):
     description = 'Add ServiceApplianceSet'
-    driver = Arg(help='driver python module path')
+    driver = Arg('--driver',
+                 required=True,
+                 help='driver python module path')
 
     def __call__(self, appliance_set_name=None, driver=None):
         global_config = Resource('global-system-config',
