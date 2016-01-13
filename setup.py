@@ -35,6 +35,7 @@ setup(
             'linklocal = contrail_api_cli_extra.linklocal:Linklocal',
             'route-target = contrail_api_cli_extra.route_target:RouteTarget',
             'set-encaps = contrail_api_cli_extra.encapsulation:SetEncapsulation',
+            'vrouter = contrail_api_cli_extra.vrouter:VRouter',
         ]
     },
     classifiers=[
