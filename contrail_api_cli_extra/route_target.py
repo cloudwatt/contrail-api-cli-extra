@@ -9,9 +9,6 @@ from .utils import RouteTargetAction
 
 
 class RouteTarget(Command):
-    description = "Set route target to a virtual network"
-    oper = Arg(help='Add or remove route target',
-               choices=['add', 'del'])
     virtual_network_fqname = Arg('--virtual-network-fqname',
                                  help="Virtual network FQName")
     route_target_list = Arg('--route-target-list',
@@ -32,14 +29,21 @@ class RouteTarget(Command):
                                          /!\\ Not supported until Contrail 3.0",
                                    default=[])
 
-    def __call__(self, oper=None, virtual_network_fqname=None, route_target_list=[],
-                 import_route_target_list=[], export_route_target_list=[]):
+    def __call__(self, virtual_network_fqname=None, route_target_list=None,
+                 import_route_target_list=None, export_route_target_list=None):
         try:
-            vn = Resource('virtual-network', fq_name=virtual_network_fqname,
-                          check_fq_name=True, fetch=True)
+            self.vn = Resource('virtual-network', fq_name=virtual_network_fqname,
+                               check_fq_name=True, fetch=True)
         except ValueError:
-            raise CommandError("Virtual network %s doesn't exists" %
-                               router_fq_name)
+            raise CommandError("Virtual network %s doesn't exists" % router_fq_name)
+
+class AddRouteTarget(RouteTarget):
+    description = "Add route targets associated to a virtual network"
+
+    def __call__(self, virtual_network_fqname=None, route_target_list=None,
+                 import_route_target_list=None, export_route_target_list=None):
+        super(AddRouteTarget, self).__call__(virtual_network_fqname, route_target_list,
+                 import_route_target_list, export_route_target_list)
 
         modified = False
         for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
@@ -47,26 +51,46 @@ class RouteTarget(Command):
             if not input_rt_list:
                 continue
 
-            if oper == 'add':
-                actual_rt_list = []
-                if rt_policy in vn and 'route_target' in vn[rt_policy]:
-                    actual_rt_list = vn[rt_policy]['route_target']
-                rt_to_add = list(set(input_rt_list) - set(actual_rt_list))
-                if not rt_to_add:
-                    continue
-                if rt_policy in vn and 'route_target' in vn[rt_policy]:
-                    vn[rt_policy]['route_target'].extend(rt_to_add)
-                else:
-                    vn[rt_policy] = {'route_target': rt_to_add}
-                modified = True
-            elif oper == 'del' and rt_policy in vn and 'route_target' in vn[rt_policy]:
-                actual_rt_list = vn[rt_policy]['route_target']
+            actual_rt_list = []
+            if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
+                actual_rt_list = self.vn[rt_policy]['route_target']
+            rt_to_add = list(set(input_rt_list) - set(actual_rt_list))
+            if not rt_to_add:
+                continue
+            if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
+                self.vn[rt_policy]['route_target'].extend(rt_to_add)
+            else:
+                self.vn[rt_policy] = {'route_target': rt_to_add}
+            modified = True
+
+        if modified:
+            self.vn.save()
+        else:
+            raise CommandError('All route target lists are already up-to-date')
+
+
+class DelRouteTarget(RouteTarget):
+    description = "Delete route targets associated to a virtual network"
+
+    def __call__(self, oper=None, virtual_network_fqname=None, route_target_list=None,
+                 import_route_target_list=None, export_route_target_list=None):
+        super(DelRouteTarget, self).__call__(virtual_network_fqname, route_target_list,
+                 import_route_target_list, export_route_target_list)
+
+        modified = False
+        for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
+            input_rt_list = eval(rt_policy)
+            if not input_rt_list:
+                continue
+
+            if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
+                actual_rt_list = self.vn[rt_policy]['route_target']
                 rt_to_remove = list(set(actual_rt_list) & set(input_rt_list))
                 if rt_to_remove:
-                    vn[rt_policy]['route_target'] = [rt for rt in actual_rt_list if rt not in rt_to_remove]
+                    self.vn[rt_policy]['route_target'] = [rt for rt in actual_rt_list if rt not in rt_to_remove]
                     modified = True
 
         if modified:
-            vn.save()
+            self.vn.save()
         else:
             raise CommandError('All route target lists are already up-to-date')
