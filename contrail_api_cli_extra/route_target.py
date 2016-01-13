@@ -37,13 +37,16 @@ class RouteTarget(Command):
         except ValueError:
             raise CommandError("Virtual network %s doesn't exists" % router_fq_name)
 
+
 class AddRouteTarget(RouteTarget):
     description = "Add route targets associated to a virtual network"
 
     def __call__(self, virtual_network_fqname=None, route_target_list=None,
                  import_route_target_list=None, export_route_target_list=None):
-        super(AddRouteTarget, self).__call__(virtual_network_fqname, route_target_list,
-                 import_route_target_list, export_route_target_list)
+        super(AddRouteTarget, self).__call__(virtual_network_fqname,
+                                             route_target_list,
+                                             import_route_target_list,
+                                             export_route_target_list)
 
         modified = False
         for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
@@ -74,8 +77,10 @@ class DelRouteTarget(RouteTarget):
 
     def __call__(self, oper=None, virtual_network_fqname=None, route_target_list=None,
                  import_route_target_list=None, export_route_target_list=None):
-        super(DelRouteTarget, self).__call__(virtual_network_fqname, route_target_list,
-                 import_route_target_list, export_route_target_list)
+        super(DelRouteTarget, self).__call__(virtual_network_fqname,
+                                             route_target_list,
+                                             import_route_target_list,
+                                             export_route_target_list)
 
         modified = False
         for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:

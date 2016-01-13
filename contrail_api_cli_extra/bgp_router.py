@@ -14,9 +14,12 @@ DEFAULT_RI_FQ_NAME = ['default-domain', 'default-project', 'ip-fabric',
                       '__default__']
 
 
-class AddBGPRouter(Command):
-    description = "Add BgpRouter to the API server"
+class BGPRouter(Command):
     router_name = Arg(help="BGP router name")
+
+
+class AddBGPRouter(BGPRouter):
+    description = "Add BgpRouter to the API server"
     router_ip = Arg('--router-ip', help="BGP router IP", type=ip_type)
     router_port = Arg('--router-port', help="BGP port (default: %(default)s)",
                       type=port_type, default=179)
@@ -69,9 +72,8 @@ class AddBGPRouter(Command):
         bgp_router.save()
 
 
-class DelBGPRouter(Command):
+class DelBGPRouter(BGPRouter):
     description = "Delete BgpRouter to the API server"
-    router_name = Arg(help="BGP router name")
 
     def __call__(self, router_name=None):
         try:
