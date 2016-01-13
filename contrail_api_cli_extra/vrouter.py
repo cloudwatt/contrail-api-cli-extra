@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from six import text_type
-
-from keystoneclient.exceptions import HttpError
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
-from contrail_api_cli.exceptions import CommandError
 
 from .utils import ip_type
 
@@ -38,20 +34,13 @@ class AddVRouter(VRouter):
                            virtual_router_ip_address=vrouter_ip)
         if vrouter_type:
             vrouter['virtual_router_type'] = [vrouter_type]
-        try:
-            vrouter.save()
-        except HttpError as e:
-            raise CommandError(text_type(e))
+        vrouter.save()
 
 
 class DelVRouter(VRouter):
     description = 'Remove vrouter'
 
     def __call__(self, vrouter_name=None):
-        try:
-            vrouter = Resource('virtual-router',
-                               fq_name='default-global-system-config:%s' % vrouter_name,
-                               check_fq_name=True)
-        except ValueError as e:
-            raise CommandError(text_type(e))
+        vrouter = Resource('virtual-router',
+                           fq_name='default-global-system-config:%s' % vrouter_name)
         vrouter.delete()

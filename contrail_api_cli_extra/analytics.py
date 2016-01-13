@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from six import text_type
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
-from contrail_api_cli.exceptions import CommandError
 
 from .utils import ip_type
 
@@ -37,10 +35,6 @@ class DelAnalytics(Analytics):
     description = 'Remove analytics node'
 
     def __call__(self, analytics_name=None):
-        try:
-            analytics = Resource('analytics-node',
-                                 fq_name='default-global-system-config:%s' % analytics_name,
-                                 check_fq_name=True)
-        except ValueError as e:
-            raise CommandError(text_type(e))
+        analytics = Resource('analytics-node',
+                             fq_name='default-global-system-config:%s' % analytics_name)
         analytics.delete()

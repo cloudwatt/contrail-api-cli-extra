@@ -76,12 +76,7 @@ class DelBGPRouter(BGPRouter):
     description = "Delete BgpRouter to the API server"
 
     def __call__(self, router_name=None):
-        try:
-            router_fq_name = DEFAULT_RI_FQ_NAME + [router_name]
-            bgp_router = Resource('bgp-router',
-                                  fq_name=router_fq_name,
-                                  check_fq_name=True)
-        except ValueError:
-            raise CommandError("BGP router %s doesn't exists" %
-                               FQName(router_fq_name))
+        router_fq_name = DEFAULT_RI_FQ_NAME + [router_name]
+        bgp_router = Resource('bgp-router',
+                              fq_name=router_fq_name)
         bgp_router.delete()
