@@ -9,9 +9,6 @@ from .utils import ip_type
 
 
 class Linklocal(Command):
-    description = "Provision linklocal services"
-    oper = Arg(help='Add or remove linklocal service',
-               choices=['add', 'del'])
     service_name = Arg('--service-name',
                        help='Linklocal service name',
                        required=True)
@@ -33,25 +30,13 @@ class Linklocal(Command):
                               type=int,
                               required=True)
 
-    def __call__(self, oper=None, service_name=None, service_ip=None, service_port=None,
+    def __call__(self, service_name=None, service_ip=None, service_port=None,
                  fabric_dns_service_name=None, fabric_service_ip=None, fabric_service_port=None):
 
-        try:
-            vrouter_config = Resource('global-vrouter-config',
-                                      fq_name='default-global-system-config:default-global-vrouter-config',
-                                      check_fq_name=True,
-                                      fetch=True)
-        except ValueError:
-            global_config = Resource('global-system-config',
-                                     fq_name='default-global-system-config',
-                                     check_fq_name=True)
-            vrouter_config = Resource('global-vrouter-config',
-                                      fq_name='default-global-system-config:default-global-vrouter-config',
-                                      parent_uuid=global_config.uuid,
-                                      parent_type='global-system-config')
-            vrouter_config.save()
+        if not fabric_dns_service_name and not fabric_service_ip:
+            raise CommandError('--fabric_dns_service_name or --fabric_service_ip required')
 
-        linklocal_entry = {
+        self.linklocal_entry = {
             'ip_fabric_DNS_service_name': fabric_dns_service_name,
             'ip_fabric_service_ip': [],
             'ip_fabric_service_port': fabric_service_port,
@@ -60,32 +45,54 @@ class Linklocal(Command):
             'linklocal_services_name': service_name
         }
         if fabric_service_ip:
-            linklocal_entry[ip_fabric_service_ip].append(fabric_service_ip)
+            self.linklocal_entry['ip_fabric_service_ip'].append(fabric_service_ip)
 
-        if oper == 'add':
-            self.add_linklocal(vrouter_config, linklocal_entry)
-        elif oper == 'del':
-            self.del_linklocal(vrouter_config, linklocal_entry)
+        try:
+            self.vrouter_config = Resource('global-vrouter-config',
+                                           fq_name='default-global-system-config:default-global-vrouter-config',
+                                           check_fq_name=True,
+                                           fetch=True)
+        except ValueError:
+            global_config = Resource('global-system-config',
+                                     fq_name='default-global-system-config',
+                                     check_fq_name=True)
+            self.vrouter_config = Resource('global-vrouter-config',
+                                           fq_name='default-global-system-config:default-global-vrouter-config',
+                                           parent_uuid=global_config.uuid,
+                                           parent_type='global-system-config')
+            self.vrouter_config.save()
 
-    def add_linklocal(self, vrouter_config, linklocal_entry):
-        if 'linklocal_services' not in vrouter_config:
-            vrouter_config['linklocal_services'] = {}
-        if 'linklocal_service_entry' not in vrouter_config['linklocal_services']:
-            vrouter_config['linklocal_services']['linklocal_service_entry'] = []
 
-        if linklocal_entry not in vrouter_config['linklocal_services']['linklocal_service_entry']:
-            vrouter_config['linklocal_services']['linklocal_service_entry'].append(linklocal_entry)
+class AddLinklocal(Linklocal):
+    description = 'Add linklocal service'
+
+    def __call__(self, **kwargs):
+        super(AddLinklocal, self).__call__(**kwargs)
+
+        if 'linklocal_services' not in self.vrouter_config:
+            self.vrouter_config['linklocal_services'] = {}
+        if 'linklocal_service_entry' not in self.vrouter_config['linklocal_services']:
+            self.vrouter_config['linklocal_services']['linklocal_service_entry'] = []
+
+        if self.linklocal_entry not in self.vrouter_config['linklocal_services']['linklocal_service_entry']:
+            self.vrouter_config['linklocal_services']['linklocal_service_entry'].append(self.linklocal_entry)
         else:
             raise CommandError('Linklocal service already present')
-        vrouter_config.save()
+        self.vrouter_config.save()
 
-    def del_linklocal(self, vrouter_config, linklocal_entry):
-        if 'linklocal_services' not in vrouter_config:
+
+class DelLinklocal(Linklocal):
+    description = 'Remove linklocal service'
+
+    def __call__(self, **kwargs):
+        super(DelLinklocal, self).__call__(**kwargs)
+
+        if 'linklocal_services' not in self.vrouter_config:
             raise CommandError('Linklocal service not found')
-        if 'linklocal_service_entry' not in vrouter_config['linklocal_services']:
+        if 'linklocal_service_entry' not in self.vrouter_config['linklocal_services']:
             raise CommandError('Linklocal service not found')
         try:
-            vrouter_config['linklocal_services']['linklocal_service_entry'].remove(linklocal_entry)
+            self.vrouter_config['linklocal_services']['linklocal_service_entry'].remove(self.linklocal_entry)
         except ValueError:
             raise CommandError('Linklocal service not found')
-        vrouter_config.save()
+        self.vrouter_config.save()
