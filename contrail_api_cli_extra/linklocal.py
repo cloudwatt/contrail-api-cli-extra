@@ -24,12 +24,10 @@ class Linklocal(Command):
                        type=int,
                        required=True)
     fabric_dns_service_name = Arg('--fabric-dns-service-name',
-                                  help='DNS service name in the fabric',
-                                  required=True)
+                                  help='DNS service name in the fabric')
     fabric_service_ip = Arg('--fabric-service-ip',
                             help='Service IP in the fabric',
-                            type=ip_type,
-                            required=True)
+                            type=ip_type)
     fabric_service_port = Arg('--fabric-service-port',
                               help='Service port in the fabric',
                               type=int,
@@ -55,12 +53,14 @@ class Linklocal(Command):
 
         linklocal_entry = {
             'ip_fabric_DNS_service_name': fabric_dns_service_name,
-            'ip_fabric_service_ip': [fabric_service_ip],
+            'ip_fabric_service_ip': [],
             'ip_fabric_service_port': fabric_service_port,
             'linklocal_services_ip': service_ip,
             'linklocal_services_port': service_port,
             'linklocal_services_name': service_name
         }
+        if fabric_service_ip:
+            linklocal_entry[ip_fabric_service_ip].append(fabric_service_ip)
 
         if oper == 'add':
             self.add_linklocal(vrouter_config, linklocal_entry)
