@@ -39,6 +39,8 @@ setup(
             'set-encaps = contrail_api_cli_extra.encapsulation:SetEncapsulation',
             'add-vrouter = contrail_api_cli_extra.vrouter:AddVRouter',
             'del-vrouter = contrail_api_cli_extra.vrouter:DelVRouter',
+            'add-config = contrail_api_cli_extra.config:AddConfig',
+            'del-config = contrail_api_cli_extra.config:DelConfig',
         ]
     },
     classifiers=[
