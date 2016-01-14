@@ -26,7 +26,6 @@ setup(
     license="MIT",
     entry_points={
         'contrail_api_cli.command': [
-            'hello = contrail_api_cli_extra.hello:Hello',
             'add-sas = contrail_api_cli_extra.service_appliance_set:AddSAS',
             'del-sas = contrail_api_cli_extra.service_appliance_set:DelSAS',
             'set-global-asn = contrail_api_cli_extra.global_asn:SetGlobalASN',
