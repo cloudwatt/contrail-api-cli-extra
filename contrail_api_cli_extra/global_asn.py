@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
@@ -20,3 +21,18 @@ class SetGlobalASN(Command):
                                  check_fq_name=True)
         global_config['autonomous_system'] = asn
         global_config.save()
+
+
+class GetGlobalASN(Command):
+    description = "Get global ASN"
+
+    def __call__(self):
+        global_config = Resource('global-system-config',
+                                 fq_name='default-global-system-config',
+                                 check_fq_name=True, fetch=True)
+        if global_config.get('autonomous_system'):
+            return json.dumps({
+                "asn": global_config.get('autonomous_system')
+            })
+        else:
+            return json.dumps([])

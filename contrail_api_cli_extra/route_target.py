@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from six import text_type
+import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.exceptions import CommandError
@@ -11,6 +13,16 @@ from .utils import RouteTargetAction
 class RouteTarget(Command):
     virtual_network_fqname = Arg('--virtual-network-fqname',
                                  help="Virtual network FQName")
+
+    def __call__(self, virtual_network_fqname=None):
+        try:
+            self.vn = Resource('virtual-network', fq_name=virtual_network_fqname,
+                               check_fq_name=True, fetch=True)
+        except ValueError as e:
+            raise CommandError(text_type(e))
+
+
+class RouteTargetAction(RouteTarget):
     route_target_list = Arg('--route-target-list',
                             nargs='+',
                             action=RouteTargetAction,
@@ -31,14 +43,15 @@ class RouteTarget(Command):
 
     def __call__(self, virtual_network_fqname=None, route_target_list=None,
                  import_route_target_list=None, export_route_target_list=None):
+        super(RouteTargetAction, self).__call__(virtual_network_fqname)
         try:
             self.vn = Resource('virtual-network', fq_name=virtual_network_fqname,
                                check_fq_name=True, fetch=True)
-        except ValueError:
-            raise CommandError("Virtual network %s doesn't exists" % router_fq_name)
+        except ValueError as e:
+            raise CommandError(text_type(e))
 
 
-class AddRouteTarget(RouteTarget):
+class AddRouteTarget(RouteTargetAction):
     description = "Add route targets associated to a virtual network"
 
     def __call__(self, virtual_network_fqname=None, route_target_list=None,
@@ -72,7 +85,7 @@ class AddRouteTarget(RouteTarget):
             raise CommandError('All route target lists are already up-to-date')
 
 
-class DelRouteTarget(RouteTarget):
+class DelRouteTarget(RouteTargetAction):
     description = "Delete route targets associated to a virtual network"
 
     def __call__(self, oper=None, virtual_network_fqname=None, route_target_list=None,
@@ -99,3 +112,18 @@ class DelRouteTarget(RouteTarget):
             self.vn.save()
         else:
             raise CommandError('All route target lists are already up-to-date')
+
+
+class ListRouteTarget(RouteTarget):
+    description = 'List route targets'
+
+    def __call__(self, virtual_network_fqname=None):
+        try:
+            super(ListRouteTarget, self).__call__(virtual_network_fqname)
+            result = {}
+            for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
+                if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
+                    result[rt_policy] = self.vn[rt_policy]['route_target']
+            return json.dumps(result, indent=2)
+        except CommandError:
+            return json.dumps([])

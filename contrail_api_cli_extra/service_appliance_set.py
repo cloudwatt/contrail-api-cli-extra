@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from six import text_type
+import json
 
 from contrail_api_cli.commands import Command, Arg
-from contrail_api_cli.resource import Resource
+from contrail_api_cli.resource import Resource, Collection
+from contrail_api_cli.exceptions import CommandError
 
 
 class SAS(Command):
@@ -10,7 +13,7 @@ class SAS(Command):
 
 
 class AddSAS(SAS):
-    description = 'Add ServiceApplianceSet'
+    description = 'Add service appliance set'
     driver = Arg('--driver',
                  required=True,
                  help='driver python module path')
@@ -28,9 +31,24 @@ class AddSAS(SAS):
 
 
 class DelSAS(SAS):
-    description = 'Del ServiceApplianceSet'
+    description = 'Del service appliance set'
 
     def __call__(self, appliance_set_name=None):
-        sas = Resource('service-appliance-set',
-                       fq_name='default-global-system-config:%s' % appliance_set_name)
-        sas.delete()
+        try:
+            sas = Resource('service-appliance-set',
+                           fq_name='default-global-system-config:%s' % appliance_set_name,
+                           check_fq_name=True)
+            sas.delete()
+        except ValueError as e:
+            raise CommandError(text_type(e))
+
+
+class ListSAS(Command):
+    description = 'List service appliance sets'
+
+    def __call__(self):
+        sass = Collection('service-appliance-set',
+                          fetch=True, recursive=2)
+        return json.dumps([{'appliance_set_name': sas.fq_name[-1],
+                            'driver': sas['service_appliance_driver']}
+                          for sas in sass if 'service_appliance_driver' in sas], indent=2)

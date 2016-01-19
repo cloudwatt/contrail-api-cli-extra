@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from six import text_type
+import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
@@ -10,16 +11,12 @@ from .utils import ip_type
 
 
 class DNSNameserver(Command):
-    ips = Arg(nargs="+", metavar='nameserver',
-              help='IPs of DNS servers',
-              type=ip_type,
-              default=[])
     network_ipam_fqname = Arg('--network-ipam-fqname',
                               metavar='fqname',
                               help='Network IPAM fqname (default: %(default)s)',
                               default='default-domain:default-project:default-network-ipam')
 
-    def __call__(self, ips=None, network_ipam_fqname=None):
+    def __call__(self, network_ipam_fqname=None):
         try:
             self.ipam = Resource('network-ipam', fq_name=network_ipam_fqname,
                                  check_fq_name=True, fetch=True)
@@ -37,11 +34,21 @@ class DNSNameserver(Command):
             }
 
 
-class AddDNSNameserver(DNSNameserver):
+class DNSNameserverAction(DNSNameserver):
+    ips = Arg(nargs="+", metavar='nameserver',
+              help='IPs of DNS servers',
+              type=ip_type,
+              default=[])
+
+    def __call__(self, ips=None, network_ipam_fqname=None):
+        super(DNSNameserverAction, self).__call__(network_ipam_fqname=network_ipam_fqname)
+
+
+class AddDNSNameserver(DNSNameserverAction):
     description = 'Add DNS nameserver'
 
-    def __call__(self, ips=None, **kwargs):
-        super(AddDNSNameserver, self).__call__(ips=ips, **kwargs)
+    def __call__(self, ips=None, network_ipam_fqname=None):
+        super(AddDNSNameserver, self).__call__(ips=ips, network_ipam_fqname=network_ipam_fqname)
         added = False
         for ip in ips:
             if ip not in self.ipam['network_ipam_mgmt']['ipam_dns_server']['tenant_dns_server_address']['ip_address']:
@@ -53,11 +60,11 @@ class AddDNSNameserver(DNSNameserver):
             raise CommandError('All IPs already configured')
 
 
-class DelDNSNameserver(DNSNameserver):
+class DelDNSNameserver(DNSNameserverAction):
     description = 'Del DNS nameserver'
 
-    def __call__(self, ips=None, **kwargs):
-        super(DelDNSNameserver, self).__call__(ips=ips, **kwargs)
+    def __call__(self, ips=None, network_ipam_fqname=None):
+        super(DelDNSNameserver, self).__call__(ips=ips, network_ipam_fqname=network_ipam_fqname)
         removed = False
         for ip in ips:
             try:
@@ -69,3 +76,18 @@ class DelDNSNameserver(DNSNameserver):
             self.ipam.save()
         else:
             raise CommandError('All IPs already not configured')
+
+
+class ListDNSNameserver(DNSNameserver):
+    description = 'List DNS nameservers'
+
+    def __call__(self, network_ipam_fqname=None):
+        super(ListDNSNameserver, self).__call__(network_ipam_fqname=network_ipam_fqname)
+        ips = self.ipam['network_ipam_mgmt']['ipam_dns_server']['tenant_dns_server_address']['ip_address']
+        if ips:
+            return json.dumps({
+                'ips': ips,
+                'network_ipam_fqname': network_ipam_fqname
+            })
+        else:
+            return json.dumps([])

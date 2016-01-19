@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from six import text_type
+import json
 
 from contrail_api_cli.commands import Command, Arg
-from contrail_api_cli.resource import Resource
+from contrail_api_cli.resource import Resource, Collection
 
 from .utils import ip_type
 
@@ -35,6 +37,21 @@ class DelAnalytics(Analytics):
     description = 'Remove analytics node'
 
     def __call__(self, analytics_name=None):
-        analytics = Resource('analytics-node',
-                             fq_name='default-global-system-config:%s' % analytics_name)
-        analytics.delete()
+        try:
+            analytics = Resource('analytics-node',
+                                 fq_name='default-global-system-config:%s' % analytics_name,
+                                 fetch=True)
+            analytics.delete()
+        except ValueError as e:
+            raise CommandError(text_type(e))
+
+
+class ListAnalytics(Command):
+    description = 'List analytics nodes'
+
+    def __call__(self):
+        analytics = Collection('analytics-node',
+                               fetch=True, recursive=2)
+        return json.dumps([{'analytics_name': analytic.fq_name[-1],
+                            'analytics_ip': analytic['analytics_node_ip_address']}
+                           for analytic in analytics], indent=2)

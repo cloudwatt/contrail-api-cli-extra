@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
@@ -66,8 +67,10 @@ class Linklocal(Command):
 class AddLinklocal(Linklocal):
     description = 'Add linklocal service'
 
-    def __call__(self, **kwargs):
-        super(AddLinklocal, self).__call__(**kwargs)
+    def __call__(self, service_name=None, service_ip=None, service_port=None,
+                 fabric_dns_service_name=None, fabric_service_ip=None, fabric_service_port=None):
+        super(AddLinklocal, self).__call__(service_name, service_ip, service_port,
+                                           fabric_dns_service_name, fabric_service_ip, fabric_service_port)
 
         if 'linklocal_services' not in self.vrouter_config:
             self.vrouter_config['linklocal_services'] = {}
@@ -84,8 +87,10 @@ class AddLinklocal(Linklocal):
 class DelLinklocal(Linklocal):
     description = 'Remove linklocal service'
 
-    def __call__(self, **kwargs):
-        super(DelLinklocal, self).__call__(**kwargs)
+    def __call__(self, service_name=None, service_ip=None, service_port=None,
+                 fabric_dns_service_name=None, fabric_service_ip=None, fabric_service_port=None):
+        super(DelLinklocal, self).__call__(service_name, service_ip, service_port,
+                                           fabric_dns_service_name, fabric_service_ip, fabric_service_port)
 
         if 'linklocal_services' not in self.vrouter_config:
             raise CommandError('Linklocal service not found')
@@ -96,3 +101,24 @@ class DelLinklocal(Linklocal):
         except ValueError:
             raise CommandError('Linklocal service not found')
         self.vrouter_config.save()
+
+
+class ListLinklocal(Command):
+    description = 'List linklocal services'
+
+    def __call__(self):
+        try:
+            vrouter_config = Resource('global-vrouter-config',
+                                      fq_name='default-global-system-config:default-global-vrouter-config',
+                                      check_fq_name=True, fetch=True)
+            if 'linklocal_services' in vrouter_config:
+                return json.dumps([{'service_name': service['linklocal_services_name'],
+                                    'service_ip': service['linklocal_services_ip'],
+                                    'service_port': service['linklocal_services_port'],
+                                    'fabric_dns_service_name': service.get('ip_fabric_DNS_service_name'),
+                                    'fabric_service_ip': service['ip_fabric_service_ip'],
+                                    'fabric_service_port': service['ip_fabric_service_port']}
+                                  for service in vrouter_config['linklocal_services'].get('linklocal_service_entry', [])], indent=2)
+        except ValueError:
+            pass
+        return json.dumps([])

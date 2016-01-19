@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from six import text_type
+import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.exceptions import CommandError
-from contrail_api_cli.resource import Resource
+from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import FQName
 
 from .utils import ip_type, port_type, RouteTargetAction
@@ -77,6 +79,25 @@ class DelBGPRouter(BGPRouter):
 
     def __call__(self, router_name=None):
         router_fq_name = DEFAULT_RI_FQ_NAME + [router_name]
-        bgp_router = Resource('bgp-router',
-                              fq_name=router_fq_name)
-        bgp_router.delete()
+        try:
+            bgp_router = Resource('bgp-router',
+                                  fq_name=router_fq_name,
+                                  check_fq_name=True)
+            bgp_router.delete()
+        except ValueError as e:
+            raise CommandError(text_type(e))
+
+
+class ListBGPRouter(Command):
+    description = 'List bgp routers'
+
+    def __call__(self):
+        routers = Collection('bgp-router',
+                             fetch=True, recursive=2)
+        return json.dumps([{'router_name': router.fq_name[-1],
+                            'router_ip': router['bgp_router_parameters']['address'],
+                            'router_port': router['bgp_router_parameters']['port'],
+                            'router_asn': router['bgp_router_parameters']['autonomous_system'],
+                            'router_type': router['bgp_router_parameters']['vendor'],
+                            'router_address_families': router['bgp_router_parameters']['address_families']['family']}
+                          for router in routers], indent=2)
