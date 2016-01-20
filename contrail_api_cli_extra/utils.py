@@ -12,7 +12,7 @@ def ip_type(string):
 
 def network_type(string):
     try:
-        return netaddr.IPNetwork(string)
+        return text_type(netaddr.IPNetwork(string))
     except netaddr.AddrFormatError:
         raise argparse.ArgumentTypeError('%s is not a network' % string)
 
