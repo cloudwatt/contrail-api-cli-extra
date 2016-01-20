@@ -6,8 +6,15 @@ import netaddr
 def ip_type(string):
     try:
         return text_type(netaddr.IPAddress(string))
-    except netaddr.core.AddrFormatError:
+    except netaddr.AddrFormatError:
         raise argparse.ArgumentTypeError('%s is not an ip address' % string)
+
+
+def network_type(string):
+    try:
+        return netaddr.IPNetwork(string)
+    except netaddr.AddrFormatError:
+        raise argparse.ArgumentTypeError('%s is not a network' % string)
 
 
 def port_type(value):
@@ -39,7 +46,7 @@ class RouteTargetAction(argparse.Action):
             pass
         try:
             return text_type(netaddr.IPNetwork(value, version=4).ip)
-        except AddrFormatError as e:
+        except netaddr.AddrFormatError as e:
             raise argparse.ArgumentTypeError(str(e))
 
     @staticmethod

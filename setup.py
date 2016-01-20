@@ -54,6 +54,9 @@ setup(
             'add-analytics = contrail_api_cli_extra.analytics:AddAnalytics',
             'del-analytics = contrail_api_cli_extra.analytics:DelAnalytics',
             'list-analytics = contrail_api_cli_extra.analytics:ListAnalytics',
+            'add-vn = contrail_api_cli_extra.vn:AddVN',
+            'del-vn = contrail_api_cli_extra.vn:DelVN',
+            'list-vn = contrail_api_cli_extra.vn:ListVNs',
         ],
         'contrail_api_cli.command': [
             'provision = contrail_api_cli_extra.provision:Provision',
