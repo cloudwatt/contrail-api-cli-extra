@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from six import text_type
 import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource, Collection
-from contrail_api_cli.exceptions import CommandError
 
 from .utils import ip_type
 
@@ -24,12 +22,10 @@ class AddConfig(Config):
     def __call__(self, config_name=None, config_ip=None):
 
         global_config = Resource('global-system-config',
-                                 fq_name='default-global-system-config',
-                                 check_fq_name=True)
+                                 fq_name='default-global-system-config')
         config = Resource('config-node',
                           fq_name='default-global-system-config:%s' % config_name,
-                          parent_type='global-system-config',
-                          parent_uuid=global_config.uuid,
+                          parent=global_config,
                           config_node_ip_address=config_ip)
         config.save()
 
@@ -38,13 +34,10 @@ class DelConfig(Config):
     description = 'Remove config node'
 
     def __call__(self, config_name=None):
-        try:
-            config = Resource('config-node',
-                              fq_name='default-global-system-config:%s' % config_name,
-                              check_fq_name=True)
-            config.delete()
-        except ValueError as e:
-            raise CommandError(text_type(e))
+        config = Resource('config-node',
+                          fq_name='default-global-system-config:%s' % config_name,
+                          check=True)
+        config.delete()
 
 
 class ListConfig(Command):

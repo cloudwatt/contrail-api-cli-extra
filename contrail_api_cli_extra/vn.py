@@ -6,7 +6,7 @@ import netaddr
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource, Collection
-from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.exceptions import CommandError, ResourceNotFound
 from contrail_api_cli.utils import FQName
 
 from .utils import network_type
@@ -39,9 +39,7 @@ class AddVN(VNAction):
     def __call__(self, vn_parent_fqname=None, vn_name=None, external=False, shared=False, subnet=None):
         vn_fqname = '%s:%s' % (vn_parent_fqname, vn_name)
 
-        project = Resource('project',
-                           fq_name=vn_parent_fqname,
-                           check_fq_name=True)
+        project = Resource('project', fq_name=vn_parent_fqname)
         subnet = netaddr.IPNetwork(subnet)
 
         ipam_ref = {
@@ -58,11 +56,10 @@ class AddVN(VNAction):
 
         vn = Resource('virtual-network',
                       fq_name=vn_fqname,
+                      parent=project,
                       router_external=external,
                       is_shared=shared,
-                      network_ipam_refs=[ipam_ref],
-                      parent_type='project',
-                      parent_uuid=project.uuid)
+                      network_ipam_refs=[ipam_ref])
         vn.save()
 
         if external:
@@ -78,31 +75,25 @@ class DelVN(VNAction):
 
     def __call__(self, vn_parent_fqname=None, vn_name=None):
         vn_fqname = '%s:%s' % (vn_parent_fqname, vn_name)
-        try:
-            vn = Resource('virtual-network',
-                          fq_name=vn_fqname,
-                          check_fq_name=True,
-                          fetch=True)
-            if vn.get('router_external', False):
-                try:
-                    fip_pool = Resource('floating-ip-pool',
-                                        fq_name='%s:%s' % (vn_fqname, 'floating-ip-pool'),
-                                        check_fq_name=True)
-                    fip_pool.delete()
-                except ValueError:
-                    pass
-            vn.delete()
-        except ValueError as e:
-            raise CommandError(text_type(e))
+        vn = Resource('virtual-network',
+                      fq_name=vn_fqname,
+                      fetch=True)
+        if vn.get('router_external', False):
+            try:
+                fip_pool = Resource('floating-ip-pool',
+                                    fq_name='%s:%s' % (vn_fqname, 'floating-ip-pool'),
+                                    check=True)
+                fip_pool.delete()
+            except ResourceNotFound:
+                pass
+        vn.delete()
 
 
 class ListVNs(VN):
     description = 'List virtual-networks'
 
     def __call__(self, vn_parent_fqname=None):
-        project = Resource('project',
-                           fq_name=vn_parent_fqname,
-                           check_fq_name=True)
+        project = Resource('project', fq_name=vn_parent_fqname, check=True)
 
         vns = Collection('virtual-network',
                          parent_uuid=project.uuid,

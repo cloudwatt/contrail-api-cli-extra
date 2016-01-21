@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from six import text_type
 import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource, Collection
-from contrail_api_cli.exceptions import CommandError
 
 from .utils import ip_type
 
@@ -28,12 +26,10 @@ class AddVRouter(VRouter):
     def __call__(self, vrouter_ip=None, vrouter_name=None, vrouter_type=None):
 
         global_config = Resource('global-system-config',
-                                 fq_name='default-global-system-config',
-                                 check_fq_name=True)
+                                 fq_name='default-global-system-config')
         vrouter = Resource('virtual-router',
                            fq_name='default-global-system-config:%s' % vrouter_name,
-                           parent_type='global-system-config',
-                           parent_uuid=global_config.uuid,
+                           parent=global_config,
                            virtual_router_ip_address=vrouter_ip)
         if vrouter_type:
             vrouter['virtual_router_type'] = [vrouter_type]
@@ -44,13 +40,10 @@ class DelVRouter(VRouter):
     description = 'Remove vrouter'
 
     def __call__(self, vrouter_name=None):
-        try:
-            vrouter = Resource('virtual-router',
-                               fq_name='default-global-system-config:%s' % vrouter_name,
-                               check_fq_name=True)
-            vrouter.delete()
-        except ValueError as e:
-            raise CommandError(text_type(e))
+        vrouter = Resource('virtual-router',
+                           fq_name='default-global-system-config:%s' % vrouter_name,
+                           check=True)
+        vrouter.delete()
 
 
 class ListVRouter(Command):

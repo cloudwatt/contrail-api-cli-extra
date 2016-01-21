@@ -18,7 +18,7 @@ class SetGlobalASN(Command):
     def __call__(self, asn=None):
         global_config = Resource('global-system-config',
                                  fq_name='default-global-system-config',
-                                 check_fq_name=True)
+                                 check=True)
         global_config['autonomous_system'] = asn
         global_config.save()
 
@@ -29,7 +29,7 @@ class GetGlobalASN(Command):
     def __call__(self):
         global_config = Resource('global-system-config',
                                  fq_name='default-global-system-config',
-                                 check_fq_name=True, fetch=True)
+                                 fetch=True)
         if global_config.get('autonomous_system'):
             return json.dumps({
                 "asn": global_config.get('autonomous_system')

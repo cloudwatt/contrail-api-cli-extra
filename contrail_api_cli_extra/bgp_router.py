@@ -42,17 +42,14 @@ class AddBGPRouter(BGPRouter):
                  router_type=None):
 
         default_ri = Resource('routing-instance', fq_name=DEFAULT_RI_FQ_NAME,
-                              check_fq_name=True)
+                              check=True)
         router_fq_name = DEFAULT_RI_FQ_NAME + [router_name]
 
-        try:
-            bgp_router = Resource('bgp-router',
-                                  fq_name=router_fq_name,
-                                  check_fq_name=True)
+        bgp_router = Resource('bgp-router',
+                              fq_name=router_fq_name)
+        if bgp_router.exists:
             raise CommandError("The BGP router %s already exists" %
                                FQName(router_fq_name))
-        except ValueError:
-            pass
 
         if router_type != 'contrail' and 'erm-vpn' in router_address_families:
             router_address_families.remove('erm-vpn')
@@ -67,10 +64,9 @@ class AddBGPRouter(BGPRouter):
             'vendor': router_type
         }
         bgp_router = Resource('bgp-router',
-                              fq_name=router_fq_name)
-        bgp_router['parent_type'] = 'routing-instance'
-        bgp_router['parent_uuid'] = default_ri.uuid
-        bgp_router['bgp_router_parameters'] = router_parameters
+                              fq_name=router_fq_name,
+                              parent=default_ri,
+                              bgp_router_parameters=router_parameters)
         bgp_router.save()
 
 
@@ -79,13 +75,10 @@ class DelBGPRouter(BGPRouter):
 
     def __call__(self, router_name=None):
         router_fq_name = DEFAULT_RI_FQ_NAME + [router_name]
-        try:
-            bgp_router = Resource('bgp-router',
-                                  fq_name=router_fq_name,
-                                  check_fq_name=True)
-            bgp_router.delete()
-        except ValueError as e:
-            raise CommandError(text_type(e))
+        bgp_router = Resource('bgp-router',
+                              fq_name=router_fq_name,
+                              check=True)
+        bgp_router.delete()
 
 
 class ListBGPRouter(Command):

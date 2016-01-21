@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from six import text_type
 import json
 
 from contrail_api_cli.commands import Command, Arg
@@ -17,11 +16,8 @@ class DNSNameserver(Command):
                               default='default-domain:default-project:default-network-ipam')
 
     def __call__(self, network_ipam_fqname=None):
-        try:
-            self.ipam = Resource('network-ipam', fq_name=network_ipam_fqname,
-                                 check_fq_name=True, fetch=True)
-        except ValueError as e:
-            raise CommandError(text_type(e))
+        self.ipam = Resource('network-ipam', fq_name=network_ipam_fqname,
+                             fetch=True)
 
         if 'network_ipam_mgmt' not in self.ipam:
             self.ipam['network_ipam_mgmt'] = {

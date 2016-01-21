@@ -4,7 +4,7 @@ import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
-from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.exceptions import CommandError, ResourceNotFound
 
 from .utils import ip_type
 
@@ -51,16 +51,13 @@ class Linklocal(Command):
         try:
             self.vrouter_config = Resource('global-vrouter-config',
                                            fq_name='default-global-system-config:default-global-vrouter-config',
-                                           check_fq_name=True,
                                            fetch=True)
         except ValueError:
             global_config = Resource('global-system-config',
-                                     fq_name='default-global-system-config',
-                                     check_fq_name=True)
+                                     fq_name='default-global-system-config')
             self.vrouter_config = Resource('global-vrouter-config',
                                            fq_name='default-global-system-config:default-global-vrouter-config',
-                                           parent_uuid=global_config.uuid,
-                                           parent_type='global-system-config')
+                                           parent=global_config)
             self.vrouter_config.save()
 
 
@@ -110,7 +107,7 @@ class ListLinklocal(Command):
         try:
             vrouter_config = Resource('global-vrouter-config',
                                       fq_name='default-global-system-config:default-global-vrouter-config',
-                                      check_fq_name=True, fetch=True)
+                                      fetch=True)
             if 'linklocal_services' in vrouter_config:
                 return json.dumps([{'service_name': service['linklocal_services_name'],
                                     'service_ip': service['linklocal_services_ip'],
@@ -119,6 +116,6 @@ class ListLinklocal(Command):
                                     'fabric_service_ip': service['ip_fabric_service_ip'],
                                     'fabric_service_port': service['ip_fabric_service_port']}
                                   for service in vrouter_config['linklocal_services'].get('linklocal_service_entry', [])], indent=2)
-        except ValueError:
+        except ResourceNotFound:
             pass
         return json.dumps([])

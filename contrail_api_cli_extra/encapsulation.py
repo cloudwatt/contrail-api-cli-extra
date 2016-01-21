@@ -4,7 +4,7 @@ import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
-from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.exceptions import CommandError, ResourceNotFound
 
 
 class SetEncapsulation(Command):
@@ -19,17 +19,13 @@ class SetEncapsulation(Command):
         try:
             vrouter_config = Resource('global-vrouter-config',
                                       fq_name='default-global-system-config:default-global-vrouter-config',
-                                      check_fq_name=True,
                                       fetch=True)
-        except ValueError:
+        except ResourceNotFound:
             global_config = Resource('global-system-config',
-                                     fq_name='default-global-system-config',
-                                     check_fq_name=True)
+                                     fq_name='default-global-system-config')
             vrouter_config = Resource('global-vrouter-config',
                                       fq_name='default-global-system-config:default-global-vrouter-config',
-                                      parent_uuid=global_config.uuid,
-                                      parent_type='global-system-config')
-            vrouter_config.save()
+                                      parent=global_config)
 
         vrouter_config['encapsulation_priorities'] = {
             'encapsulation': modes
@@ -44,7 +40,6 @@ class GetEncapsulation(Command):
         try:
             vrouter_config = Resource('global-vrouter-config',
                                       fq_name='default-global-system-config:default-global-vrouter-config',
-                                      check_fq_name=True,
                                       fetch=True)
             if 'encapsulation_priorities' in vrouter_config:
                 return json.dumps({

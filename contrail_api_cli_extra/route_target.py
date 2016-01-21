@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from six import text_type
 import json
 
 from contrail_api_cli.commands import Command, Arg
-from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.exceptions import CommandError, ResourceNotFound
 from contrail_api_cli.resource import Resource
 
 from .utils import RouteTargetAction
@@ -15,11 +14,8 @@ class RouteTarget(Command):
                                  help="Virtual network FQName")
 
     def __call__(self, virtual_network_fqname=None):
-        try:
-            self.vn = Resource('virtual-network', fq_name=virtual_network_fqname,
-                               check_fq_name=True, fetch=True)
-        except ValueError as e:
-            raise CommandError(text_type(e))
+        self.vn = Resource('virtual-network', fq_name=virtual_network_fqname,
+                           fetch=True)
 
 
 class RouteTargetAction(RouteTarget):
@@ -40,15 +36,6 @@ class RouteTargetAction(RouteTarget):
                                    help="Exported route target '<ASN>:<route target number>' (default: %(default)s) \
                                          /!\\ Not supported until Contrail 3.0",
                                    default=[])
-
-    def __call__(self, virtual_network_fqname=None, route_target_list=None,
-                 import_route_target_list=None, export_route_target_list=None):
-        super(RouteTargetAction, self).__call__(virtual_network_fqname)
-        try:
-            self.vn = Resource('virtual-network', fq_name=virtual_network_fqname,
-                               check_fq_name=True, fetch=True)
-        except ValueError as e:
-            raise CommandError(text_type(e))
 
 
 class AddRouteTarget(RouteTargetAction):
@@ -128,6 +115,6 @@ class ListRouteTarget(RouteTarget):
                     result[rt_policy] = []
             if result:
                 return json.dumps(result, indent=2)
-        except CommandError:
+        except ResourceNotFound:
             pass
         return json.dumps([])
