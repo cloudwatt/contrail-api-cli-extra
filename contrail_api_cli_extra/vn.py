@@ -2,10 +2,12 @@
 from __future__ import unicode_literals
 from six import text_type
 import json
+import netaddr
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.utils import FQName
 
 from .utils import network_type
 
@@ -40,6 +42,7 @@ class AddVN(VNAction):
         project = Resource('project',
                            fq_name=vn_parent_fqname,
                            check_fq_name=True)
+        subnet = netaddr.IPNetwork(subnet)
 
         ipam_ref = {
             "attr": {
@@ -113,7 +116,7 @@ class ListVNs(VN):
 
         return json.dumps([{
             "vn_name": vn.fq_name[-1],
-            "vn_parent_fqname": vn.fq_name[0:-1],
+            "vn_parent_fqname": str(FQName(vn.fq_name[0:-1])),
             "shared": vn.get('is_shared', False),
             "external": vn.get('router_external', False),
             "subnet": get_vn_subnet(vn)
