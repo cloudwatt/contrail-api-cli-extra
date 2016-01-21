@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import copy
 import argparse
 import json
 import inspect
@@ -91,6 +92,14 @@ class Provision(Command):
                 env[key][idx] = self._normalize_keys(call)
         return env
 
+    def _setup_defaults_values(self, env):
+        for key, values in env.items():
+            for idx, kwargs in enumerate(values):
+                defaults = copy.deepcopy(self._provision_defaults.get(key, {}))
+                defaults.update(kwargs)
+                env[key][idx] = defaults
+        return env
+
     def _normalize_keys(self, values):
         new_values = {}
         for key, value in values.items():
@@ -138,15 +147,18 @@ class Provision(Command):
         for action in cmd.parser._actions:
             if action.dest == 'help':
                 continue
-            arg_strings = values.get(action.dest, [])
-            if type(arg_strings) != list:
-                arg_strings = [arg_strings]
-            try:
-                values[action.dest] = cmd.parser._get_values(action, arg_strings)
-                if not values[action.dest] and action.default:
-                    values[action.dest] = action.default
-            except argparse.ArgumentError as e:
-                raise CommandError('Error in %s: %s' % (key, text_type(e)))
+            if isinstance(action, argparse._StoreConstAction):
+                values[action.dest] = values.get(action.dest, action.default)
+            else:
+                arg_strings = values.get(action.dest, [])
+                if type(arg_strings) != list:
+                    arg_strings = [arg_strings]
+                try:
+                    values[action.dest] = cmd.parser._get_values(action, arg_strings)
+                    if not values[action.dest] and action.default:
+                        values[action.dest] = action.default
+                except argparse.ArgumentError as e:
+                    raise CommandError('Error in %s: %s' % (key, text_type(e)))
         return values
 
     def _diff_envs(self, current, wanted):
@@ -228,10 +240,12 @@ class Provision(Command):
 
         wanted_env = env['provision']
         wanted_env = self._normalize_env(wanted_env)
+        wanted_env = self._setup_defaults_values(wanted_env)
         wanted_env = self._validate_env(wanted_env)
 
         current_env = self._get_current_env(wanted_env.keys())
         current_env = self._normalize_env(current_env)
+        current_env = self._setup_defaults_values(current_env)
 
         diff_env = self._diff_envs(current_env, wanted_env)
 
