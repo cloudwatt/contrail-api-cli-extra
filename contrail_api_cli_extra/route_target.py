@@ -124,6 +124,8 @@ class ListRouteTarget(RouteTarget):
             for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
                 if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
                     result[rt_policy] = self.vn[rt_policy]['route_target']
+                else:
+                    result[rt_policy] = []
             if result:
                 return json.dumps(result, indent=2)
         except CommandError:

@@ -61,5 +61,5 @@ class ListVRouter(Command):
                               fetch=True, recursive=2)
         return json.dumps([{'vrouter_name': vrouter.fq_name[-1],
                             'vrouter_ip': vrouter['virtual_router_ip_address'],
-                            'vrouter_type': vrouter.get('virtual_router_type')}
+                            'vrouter_type': vrouter.get('virtual_router_type', [])}
                            for vrouter in vrouters], indent=2)
