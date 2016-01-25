@@ -11,6 +11,7 @@ from .utils import RouteTargetAction
 
 class RouteTarget(Command):
     virtual_network_fqname = Arg('--virtual-network-fqname',
+                                 required=True,
                                  help="Virtual network FQName")
 
     def __call__(self, virtual_network_fqname=None):
