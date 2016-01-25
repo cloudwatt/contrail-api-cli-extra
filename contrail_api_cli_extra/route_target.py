@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 
 from contrail_api_cli.commands import Command, Arg
-from contrail_api_cli.exceptions import CommandError, ResourceNotFound
+from contrail_api_cli.exceptions import ResourceNotFound
 from contrail_api_cli.resource import Resource
 
 from .utils import RouteTargetAction
@@ -42,71 +42,34 @@ class RouteTargetAction(RouteTarget):
         super(RouteTargetAction, self).__call__(virtual_network_fqname)
 
 
-class AddRouteTarget(RouteTargetAction):
-    description = "Add route targets associated to a virtual network"
+class SetRouteTargets(RouteTargetAction):
+    description = "Set route targets associated to a virtual network"
 
     def __call__(self, virtual_network_fqname=None, route_target_list=None,
                  import_route_target_list=None, export_route_target_list=None):
-        super(AddRouteTarget, self).__call__(virtual_network_fqname,
-                                             route_target_list,
-                                             import_route_target_list,
-                                             export_route_target_list)
+        super(SetRouteTargets, self).__call__(virtual_network_fqname,
+                                              route_target_list,
+                                              import_route_target_list,
+                                              export_route_target_list)
 
         modified = False
         for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
             input_rt_list = eval(rt_policy)
             if not input_rt_list:
                 continue
-
-            actual_rt_list = []
-            if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
-                actual_rt_list = self.vn[rt_policy]['route_target']
-            rt_to_add = list(set(input_rt_list) - set(actual_rt_list))
-            if not rt_to_add:
-                continue
-            if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
-                self.vn[rt_policy]['route_target'].extend(rt_to_add)
-            else:
-                self.vn[rt_policy] = {'route_target': rt_to_add}
+            self.vn[rt_policy]['route_target'] = input_rt_list
             modified = True
 
         if modified:
             self.vn.save()
 
 
-class DelRouteTarget(RouteTargetAction):
-    description = "Delete route targets associated to a virtual network"
-
-    def __call__(self, oper=None, virtual_network_fqname=None, route_target_list=None,
-                 import_route_target_list=None, export_route_target_list=None):
-        super(DelRouteTarget, self).__call__(virtual_network_fqname,
-                                             route_target_list,
-                                             import_route_target_list,
-                                             export_route_target_list)
-
-        modified = False
-        for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
-            input_rt_list = eval(rt_policy)
-            if not input_rt_list:
-                continue
-
-            if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
-                actual_rt_list = self.vn[rt_policy]['route_target']
-                rt_to_remove = list(set(actual_rt_list) & set(input_rt_list))
-                if rt_to_remove:
-                    self.vn[rt_policy]['route_target'] = [rt for rt in actual_rt_list if rt not in rt_to_remove]
-                    modified = True
-
-        if modified:
-            self.vn.save()
-
-
-class ListRouteTarget(RouteTarget):
-    description = 'List route targets'
+class GetRouteTargets(RouteTarget):
+    description = 'Get route targets'
 
     def __call__(self, virtual_network_fqname=None):
         try:
-            super(ListRouteTarget, self).__call__(virtual_network_fqname)
+            super(GetRouteTargets, self).__call__(virtual_network_fqname)
             result = {}
             for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
                 if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
