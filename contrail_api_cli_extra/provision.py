@@ -6,6 +6,7 @@ import json
 import inspect
 from six import text_type
 import logging
+from collections import OrderedDict
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.manager import CommandManager
@@ -22,7 +23,7 @@ class Actions:
     ADD = 'add'
     DEL = 'del'
     LIST = 'list'
-    APPLY = ('del', 'set', 'add')
+    APPLY = ('del', 'add', 'set')
 
 
 class Provision(Command):
@@ -40,7 +41,7 @@ class Provision(Command):
         For each resource we run "get-resource" or "list-resource" and
         populate the env.
         """
-        env = {}
+        env = OrderedDict()
         for key in keys:
             if self._is_property(key):
                 cmd = self._get_command(key, Actions.GET)
@@ -84,6 +85,8 @@ class Provision(Command):
         Make sure calls definitions are in lists.
         """
         for key, value in env.items():
+            if type(value) == OrderedDict:
+                value = dict(value.items())
             if type(value) == dict:
                 env[key] = [value]
             elif type(value) != list:
@@ -174,9 +177,9 @@ class Provision(Command):
         """
 
         diff_env = {
-            Actions.SET: {},
-            Actions.ADD: {},
-            Actions.DEL: {},
+            Actions.SET: OrderedDict(),
+            Actions.ADD: OrderedDict(),
+            Actions.DEL: OrderedDict(),
         }
         for key, values in wanted.items():
             add_values = [v for v in values if v not in current.get(key, [])]
@@ -199,6 +202,10 @@ class Provision(Command):
         """Show actions to be made and ask for confirmation
         unless force is True.
         """
+        if not any([True if diff[action] else False for action in Actions.APPLY]):
+            printo('Nothing to do')
+            return False
+
         for action in Actions.APPLY:
             if not diff[action]:
                 continue
@@ -227,7 +234,7 @@ class Provision(Command):
                         raise CommandError('Call to %s %s failed: %s' % (action, key, e))
 
     def __call__(self, env_file=None, force=False):
-        env = json.load(env_file)
+        env = json.load(env_file, object_pairs_hook=OrderedDict)
 
         self._provision_defaults = {}
         for key, defaults in env.get('defaults', {}).items():
