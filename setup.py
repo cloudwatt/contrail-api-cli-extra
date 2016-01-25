@@ -57,6 +57,8 @@ setup(
             'add-vn = contrail_api_cli_extra.vn:AddVN',
             'del-vn = contrail_api_cli_extra.vn:DelVN',
             'list-vn = contrail_api_cli_extra.vn:ListVNs',
+            'set-subnets = contrail_api_cli_extra.subnet:SetSubnets',
+            'get-subnets = contrail_api_cli_extra.subnet:GetSubnets',
         ],
         'contrail_api_cli.command': [
             'provision = contrail_api_cli_extra.provision:Provision',
