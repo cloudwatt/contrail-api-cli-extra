@@ -45,6 +45,6 @@ class GetEncapsulation(Command):
                 return json.dumps({
                     "modes": vrouter_config['encapsulation_priorities'].get('encapsulation', [])
                 })
-        except ValueError:
+        except ResourceNotFound:
             pass
         return json.dumps([])

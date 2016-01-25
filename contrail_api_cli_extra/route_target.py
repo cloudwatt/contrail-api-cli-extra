@@ -37,6 +37,10 @@ class RouteTargetAction(RouteTarget):
                                          /!\\ Not supported until Contrail 3.0",
                                    default=[])
 
+    def __call__(self, virtual_network_fqname=None, route_target_list=None,
+                 import_route_target_list=None, export_route_target_list=None):
+        super(RouteTargetAction, self).__call__(virtual_network_fqname)
+
 
 class AddRouteTarget(RouteTargetAction):
     description = "Add route targets associated to a virtual network"
@@ -68,8 +72,6 @@ class AddRouteTarget(RouteTargetAction):
 
         if modified:
             self.vn.save()
-        else:
-            raise CommandError('All route target lists are already up-to-date')
 
 
 class DelRouteTarget(RouteTargetAction):
@@ -97,8 +99,6 @@ class DelRouteTarget(RouteTargetAction):
 
         if modified:
             self.vn.save()
-        else:
-            raise CommandError('All route target lists are already up-to-date')
 
 
 class ListRouteTarget(RouteTarget):

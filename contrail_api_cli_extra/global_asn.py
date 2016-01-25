@@ -4,6 +4,7 @@ import json
 
 from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource
+from contrail_api_cli.exceptions import ResourceNotFound
 
 from .utils import RouteTargetAction
 
@@ -27,12 +28,14 @@ class GetGlobalASN(Command):
     description = "Get global ASN"
 
     def __call__(self):
-        global_config = Resource('global-system-config',
-                                 fq_name='default-global-system-config',
-                                 fetch=True)
-        if global_config.get('autonomous_system'):
-            return json.dumps({
-                "asn": global_config.get('autonomous_system')
-            })
-        else:
-            return json.dumps([])
+        try:
+            global_config = Resource('global-system-config',
+                                     fq_name='default-global-system-config',
+                                     fetch=True)
+            if global_config.get('autonomous_system'):
+                return json.dumps({
+                    "asn": global_config.get('autonomous_system')
+                })
+        except ResourceNotFound:
+            pass
+        return json.dumps([])
