@@ -27,6 +27,16 @@ def port_type(value):
         raise argparse.ArgumentTypeError(str(e))
 
 
+def ip_port_type(value):
+    try:
+        ip, port = value.split(':')
+    except ValueError:
+        raise argparse.ArgumentTypeError("IP and port must be separated by the ':' character")
+    ip_type(ip)
+    port_type(port)
+    return value
+
+
 class RouteTargetAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         unique_values = set(values)
