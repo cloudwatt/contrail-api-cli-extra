@@ -27,13 +27,13 @@ def port_type(value):
         raise argparse.ArgumentTypeError(str(e))
 
 
-def ip_port_type(value):
-    try:
-        ip, port = value.split(':')
-    except ValueError:
-        raise argparse.ArgumentTypeError("IP and port must be separated by the ':' character")
-    ip_type(ip)
-    port_type(port)
+def server_type(value):
+    server = value.split(':')
+    if len(server) > 2:
+        raise argparse.ArgumentTypeError("Server can be composed to the hostname and port separated by the ':' character")
+    if len(server) == 2:
+        port = server[1]
+        port_type(port)
     return value
 
 

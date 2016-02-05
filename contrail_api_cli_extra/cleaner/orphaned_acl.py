@@ -9,7 +9,7 @@ from contrail_api_cli.commands import Command, Arg
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.exceptions import ResourceNotFound
 
-from ..utils import ip_port_type
+from ..utils import server_type
 
 
 logger = logging.getLogger(__name__)
@@ -47,8 +47,8 @@ class OrphanedACL(Command):
     cassandra_servers = Arg('--cassandra-servers',
                             help="Cassandra server list' (default: %(default)s)",
                             nargs='+',
-                            type=ip_port_type,
-                            default=['127.0.0.1:9160'])
+                            type=server_type,
+                            default=['localhost:9160'])
 
     def __call__(self, force=False, parent_type=None, cassandra_servers=None):
         valid_acl = []
