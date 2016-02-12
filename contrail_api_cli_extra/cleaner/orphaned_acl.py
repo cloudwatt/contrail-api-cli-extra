@@ -87,9 +87,9 @@ class OrphanedACL(Command):
                 else:
                     logger.debug("The ACL %(acl)s have a %(parent_type)s %(parent_acl)s which exists but \
                                   was not found in the precedent %(parent_type)s list. Not delete it." %
-                                  {'acl': acl,
-                                   'parent_type': parent_type.replace('-', ' '),
-                                   'parent_acl': parent_acl})
+                                 {'acl': acl,
+                                  'parent_type': parent_type.replace('-', ' '),
+                                  'parent_acl': parent_acl})
 
         if force:
             logger.debug("%d orphaned ACL were deleted" % len(orphaned_acls))

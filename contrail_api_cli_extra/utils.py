@@ -1,6 +1,7 @@
 from six import text_type
 import argparse
 import netaddr
+import re
 
 
 def ip_type(string):
@@ -34,6 +35,12 @@ def server_type(value):
     if len(server) == 2:
         port = server[1]
         port_type(port)
+    return value
+
+
+def md5_type(value):
+    if value and not re.match(r"([a-fA-F\d]{32})", value):
+        raise argparse.ArgumentTypeError("MD5 hash %s is not valid" % value)
     return value
 
 
