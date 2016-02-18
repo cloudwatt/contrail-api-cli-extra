@@ -41,9 +41,9 @@ class Linklocal(Command):
             'ip_fabric_DNS_service_name': fabric_dns_service_name,
             'ip_fabric_service_ip': [],
             'ip_fabric_service_port': fabric_service_port,
-            'linklocal_services_ip': service_ip,
-            'linklocal_services_port': service_port,
-            'linklocal_services_name': service_name
+            'linklocal_service_ip': service_ip,
+            'linklocal_service_port': service_port,
+            'linklocal_service_name': service_name
         }
         if fabric_service_ip:
             self.linklocal_entry['ip_fabric_service_ip'].append(fabric_service_ip)

@@ -1,6 +1,7 @@
 from six import text_type
 import argparse
 import netaddr
+import re
 
 
 def ip_type(string):
@@ -25,6 +26,22 @@ def port_type(value):
         return value
     except ValueError as e:
         raise argparse.ArgumentTypeError(str(e))
+
+
+def server_type(value):
+    server = value.split(':')
+    if len(server) > 2:
+        raise argparse.ArgumentTypeError("Server can be composed to the hostname and port separated by the ':' character")
+    if len(server) == 2:
+        port = server[1]
+        port_type(port)
+    return value
+
+
+def md5_type(value):
+    if value and not re.match(r"([a-fA-F\d]{32})", value):
+        raise argparse.ArgumentTypeError("MD5 hash %s is not valid" % value)
+    return value
 
 
 class RouteTargetAction(argparse.Action):

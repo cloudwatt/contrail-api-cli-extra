@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 
 install_requires = [
     #'contrail-api-cli>=0.1b1'
+    'pycassa',
 ]
 test_requires = []
 
@@ -61,6 +62,7 @@ setup(
         ],
         'contrail_api_cli.command': [
             'provision = contrail_api_cli_extra.provision:Provision',
+            'clean-orphaned-acl = contrail_api_cli_extra.cleaner.orphaned_acl:OrphanedACL',
         ]
     },
     classifiers=[
