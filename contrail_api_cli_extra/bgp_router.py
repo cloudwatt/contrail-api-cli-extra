@@ -128,5 +128,6 @@ class ListBGPRouter(Command):
                             'router_type': router['bgp_router_parameters']['vendor'],
                             'router_address_families': router['bgp_router_parameters']['address_families']['family'],
                             'router_md5': router['bgp_router_parameters']['auth_data']['key_items'][0]['key']
-                                              if router['bgp_router_parameters']['auth_data'] else []}
+                                          if 'auth_data' in router['bgp_router_parameters']
+                                          and router['bgp_router_parameters']['auth_data'] else []}
                           for router in routers], indent=2)
