@@ -63,6 +63,7 @@ setup(
         'contrail_api_cli.command': [
             'provision = contrail_api_cli_extra.provision:Provision',
             'clean-orphaned-acl = contrail_api_cli_extra.cleaner.orphaned_acl:OrphanedACL',
+            'clean-stale-lbaas-si = contrail_api_cli_extra.cleaner.lbaas:CleanStaleLBaasSI',
         ]
     },
     classifiers=[
