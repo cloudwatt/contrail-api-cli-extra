@@ -109,9 +109,9 @@ class ListLinklocal(Command):
                                       fq_name='default-global-system-config:default-global-vrouter-config',
                                       fetch=True)
             if 'linklocal_services' in vrouter_config:
-                return json.dumps([{'service_name': service['linklocal_services_name'],
-                                    'service_ip': service['linklocal_services_ip'],
-                                    'service_port': service['linklocal_services_port'],
+                return json.dumps([{'service_name': service['linklocal_service_name'],
+                                    'service_ip': service['linklocal_service_ip'],
+                                    'service_port': service['linklocal_service_port'],
                                     'fabric_dns_service_name': service.get('ip_fabric_DNS_service_name'),
                                     'fabric_service_ip': service['ip_fabric_service_ip'],
                                     'fabric_service_port': service['ip_fabric_service_port']}
