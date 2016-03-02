@@ -15,41 +15,44 @@ class CleanStaleLBaasSI(Command):
     def __call__(self, dry_run=False):
         service_instances = Collection('service-instance', fetch=True)
         for si in service_instances:
-            si.fetch()
 
+            # SI linked to a LBaas pool, skiping
             if 'loadbalancer_pool_back_refs' in si:
                 continue
-            if 'logical_router_back_refs' in si:
+            # skip on SNAT SIs
+            if 'si_' in str(si.fq_name) or 'snat_' in str(si.fq_name):
                 continue
 
             printo('Found stale SI %s' % str(si.path))
+            si.fetch()
 
             for vm in si.get('virtual_machine_back_refs', []):
                 vm.fetch()
                 for vr in vm.get('virtual_router_back_refs', []):
-                    vr.fetch()
-                    for vm_ref in vr.get('virtual_machine_refs', []):
-                        if vm_ref.uuid == vm.uuid:
-                            vr['virtual_machine_refs'].remove(vm_ref)
-                            printo('Remove ref from %s to %s' % (vr.path, vm.path))
-                            if not dry_run:
-                                vr.save()
-                            break
+                    printo('Remove back_ref from %s to %s' % (str(vm.path), str(vr.path)))
+                    vm.remove_back_ref(vr)
                 for vmi in vm.get('virtual_machine_interface_back_refs', []):
                     vmi.fetch()
                     for fip in vmi.get('floating_ip_back_refs', []):
                         fip.fetch()
-                        for vmi_ref in fip.get('virtual_machine_interface_refs', []):
-                            if vmi_ref.uuid == vmi.uuid:
-                                fip['virtual_machine_interface_refs'].remove(vmi_ref)
-                                printo('Remove ref from %s to %s' % (fip.path, vmi.path))
-                                if not dry_run:
-                                    fip.save()
-                                break
+                        if len(fip['virtual_machine_interface_refs']) > 1:
+                            printo('Remove back_ref from %s to %s' % (str(vmi.path), str(fip.path)))
+                            if not dry_run:
+                                vmi.remove_back_ref(fip)
+                        else:
+                            printo('Delete %s' % str(fip.path))
+                            if not dry_run:
+                                fip.delete()
                     for iip in vmi.get('instance_ip_back_refs', []):
-                        printo('Delete %s' % str(iip.path))
-                        if not dry_run:
-                            iip.delete()
+                        iip.fetch()
+                        if len(iip['virtual_machine_interface_refs']) > 1:
+                            printo('Remove back_ref from %s to %s' % (str(vmi.path), str(iip.path)))
+                            if not dry_run:
+                                vmi.remove_back_ref(iip)
+                        else:
+                            printo('Delete %s' % str(iip.path))
+                            if not dry_run:
+                                iip.delete()
                     printo('Delete %s' % str(vmi.path))
                     if not dry_run:
                         vmi.delete()
