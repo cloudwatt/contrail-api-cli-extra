@@ -52,7 +52,7 @@ class Linklocal(Command):
             self.vrouter_config = Resource('global-vrouter-config',
                                            fq_name='default-global-system-config:default-global-vrouter-config',
                                            fetch=True)
-        except ValueError:
+        except ResourceNotFound:
             global_config = Resource('global-system-config',
                                      fq_name='default-global-system-config')
             self.vrouter_config = Resource('global-vrouter-config',
