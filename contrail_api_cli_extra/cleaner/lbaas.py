@@ -15,6 +15,7 @@ class CleanStaleLBaasSI(Command):
     def __call__(self, dry_run=False):
         service_instances = Collection('service-instance', fetch=True)
         for si in service_instances:
+            si.fetch()
 
             # SI linked to a LBaas pool, skiping
             if 'loadbalancer_pool_back_refs' in si:
@@ -24,7 +25,6 @@ class CleanStaleLBaasSI(Command):
                 continue
 
             printo('Found stale SI %s' % str(si.path))
-            si.fetch()
 
             for vm in si.get('virtual_machine_back_refs', []):
                 vm.fetch()
