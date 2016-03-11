@@ -58,6 +58,8 @@ class SetRouteTargets(RouteTargetAction):
             input_rt_list = eval(rt_policy)
             if not input_rt_list:
                 continue
+            if not rt_policy in self.vn:
+                self.vn[rt_policy] = {}
             self.vn[rt_policy]['route_target'] = input_rt_list
             modified = True
 
