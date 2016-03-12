@@ -11,15 +11,16 @@ from contrail_api_cli.utils import printo, FQName
 
 
 class MigrateSI110221(Command):
+    description = 'Migrate SIs from 1.10 to 2.21'
     check = Arg('--check', '-c',
                 default=False,
                 action="store_true",
-                help='Just check for LBaas SIs to migrate')
+                help='Just check for SIs to migrate')
     dry_run = Arg('--dry-run', '-n',
                   default=False,
                   action="store_true",
                   help='Run this command in dry-run mode')
-    paths = Arg(nargs="*", help="LBaas SI path(s)",
+    paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')
 
     def _remove_back_ref(self, r1, r2):
@@ -43,9 +44,34 @@ class MigrateSI110221(Command):
             r.save()
             printo('Created %s' % r.path)
 
-    def _migrate_vmi(self, old_vmi, old_vmi_index, new_vm, si):
+    # def _migrate_vn(self, vn, vmi, si):
+        # self._delete_res(vn)
+
+        # new_display_name = 'snat-si-left_%s' % si.fq_name[-1]
+        # new_fq_name = list(si.parent.fq_name) + ['snat-si-left_%s' % si.fq_name[-1]]
+
+        # del vn['uuid']
+        # vn['fq_name'] = FQName(new_fq_name)
+
+    def _migrate_iip(self, iip, new_vmi, si, itf_type):
+        self._delete_res(iip)
+
+        new_fq_name = '%s__%s-%s' % (str(si.parent.fq_name).replace(':', '__'), si.fq_name[-1], itf_type)
+
+        del iip['uuid']
+        iip['fq_name'] = FQName([new_fq_name])
+        iip['display_name'] = new_fq_name
+        iip['name'] = new_fq_name
+
+        self._create_res(iip)
+
+    def _migrate_vmi(self, old_vmi, new_vm, si):
         itf_type = old_vmi['virtual_machine_interface_properties']['service_interface_type']
-        new_fq_name = list(si.parent.fq_name) + [str(new_vm.fq_name) + '__' + itf_type + '__' + str(old_vmi_index + 1)]
+        if itf_type == 'right':
+            vmi_index = str(1)
+        else:
+            vmi_index = str(2)
+        new_fq_name = list(si.parent.fq_name) + [str(new_vm.fq_name) + '__' + itf_type + '__' + vmi_index]
 
         vmi = copy.deepcopy(old_vmi)
 
@@ -56,9 +82,16 @@ class MigrateSI110221(Command):
         vmi['name'] = new_fq_name[-1]
         self._create_res(vmi)
 
+        # if itf_type == 'left':
+            # vn = vmi.get('virtual_network_refs', [None])[0]
+            # if vn is not None and 'snat' in str(vn.fq_name):
+                # self._migrate_snat_vn(vn, vmi, si)
+
         for iip in old_vmi.get('instance_ip_back_refs', []):
             self._remove_back_ref(old_vmi, iip)
             self._add_back_ref(vmi, iip)
+            self._migrate_iip(iip, vmi, si, itf_type)
+
         for fip in old_vmi.get('floating_ip_back_refs', []):
             self._remove_back_ref(old_vmi, fip)
             self._add_back_ref(vmi, fip)
@@ -68,7 +101,7 @@ class MigrateSI110221(Command):
         return vmi
 
     def _migrate_vm(self, old_vm, old_vm_index, si):
-        new_fq_name = '%s__%s__%s' % (str(si.parent.fq_name).replace(':', '__'), si.fq_name[-1], old_vm_index + 1)
+        new_fq_name = '%s__%s__%s' % (str(si.parent.fq_name).replace(':', '__'), si.fq_name[-1], old_vm_index)
         new_vm = Resource('virtual-machine',
                           fq_name=[new_fq_name],
                           display_name=new_fq_name + '__network-namespace',
@@ -79,9 +112,9 @@ class MigrateSI110221(Command):
             self._remove_back_ref(old_vm, vr)
             self._add_back_ref(new_vm, vr)
 
-        for idx, old_vmi in enumerate(old_vm.get('virtual_machine_interface_back_refs', [])):
+        for old_vmi in old_vm.get('virtual_machine_interface_back_refs', []):
             old_vmi.fetch()
-            new_vmi = self._migrate_vmi(old_vmi, idx, new_vm, si)
+            new_vmi = self._migrate_vmi(old_vmi, new_vm, si)
             self._add_back_ref(new_vm, new_vmi)
 
         self._delete_res(old_vm)
@@ -116,9 +149,10 @@ class MigrateSI110221(Command):
             new_si = old_si
             re_use = True
 
-        for old_vm_index, old_vm in enumerate(old_si.get('virtual_machine_back_refs', [])):
+        for old_vm in old_si.get('virtual_machine_back_refs', []):
             old_vm.fetch()
-            new_vm = self._migrate_vm(old_vm, old_vm_index, new_si)
+            # VM index is the last char of the fq_name
+            new_vm = self._migrate_vm(old_vm, str(old_vm.fq_name)[-1], new_si)
             self._add_back_ref(new_si, new_vm)
 
         if not re_use:
@@ -151,3 +185,4 @@ class MigrateSI110221(Command):
             printo('Found lbaas SI to migrate %s (%s)' % (si.path, si.fq_name))
             if not check:
                 self._migrate_si(si)
+                printo('Done')
