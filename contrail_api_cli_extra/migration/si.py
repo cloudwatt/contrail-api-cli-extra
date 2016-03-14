@@ -44,26 +44,24 @@ class MigrateSI110221(Command):
             r.save()
             printo('Created %s' % r.path)
 
-    # def _migrate_vn(self, vn, vmi, si):
-        # self._delete_res(vn)
-
-        # new_display_name = 'snat-si-left_%s' % si.fq_name[-1]
-        # new_fq_name = list(si.parent.fq_name) + ['snat-si-left_%s' % si.fq_name[-1]]
-
-        # del vn['uuid']
-        # vn['fq_name'] = FQName(new_fq_name)
-
-    def _migrate_iip(self, iip, new_vmi, si, itf_type):
-        self._delete_res(iip)
-
+    def _migrate_iip(self, old_iip, si, itf_type):
         new_fq_name = '%s__%s-%s' % (str(si.parent.fq_name).replace(':', '__'), si.fq_name[-1], itf_type)
+
+        # there is 2 left itf so migrate the iip only once
+        if old_iip.fq_name == new_fq_name:
+            printo('Already migrated %s. Skip' % old_iip)
+            return old_iip
+
+        iip = copy.deepcopy(old_iip)
 
         del iip['uuid']
         iip['fq_name'] = FQName([new_fq_name])
         iip['display_name'] = new_fq_name
         iip['name'] = new_fq_name
-
         self._create_res(iip)
+        self._delete_res(old_iip)
+
+        return iip
 
     def _migrate_vmi(self, old_vmi, new_vm, si):
         itf_type = old_vmi['virtual_machine_interface_properties']['service_interface_type']
@@ -76,21 +74,15 @@ class MigrateSI110221(Command):
         vmi = copy.deepcopy(old_vmi)
 
         del vmi['uuid']
-        del vmi['virtual_machine_refs']
         vmi['fq_name'] = FQName(new_fq_name)
         vmi['display_name'] = new_fq_name[-1]
         vmi['name'] = new_fq_name[-1]
         self._create_res(vmi)
 
-        # if itf_type == 'left':
-            # vn = vmi.get('virtual_network_refs', [None])[0]
-            # if vn is not None and 'snat' in str(vn.fq_name):
-                # self._migrate_snat_vn(vn, vmi, si)
-
-        for iip in old_vmi.get('instance_ip_back_refs', []):
-            self._remove_back_ref(old_vmi, iip)
-            self._add_back_ref(vmi, iip)
-            self._migrate_iip(iip, vmi, si, itf_type)
+        for old_iip in old_vmi.get('instance_ip_back_refs', []):
+            self._remove_back_ref(old_vmi, old_iip)
+            new_iip = self._migrate_iip(old_iip, si, itf_type)
+            self._add_back_ref(vmi, new_iip)
 
         for fip in old_vmi.get('floating_ip_back_refs', []):
             self._remove_back_ref(old_vmi, fip)
@@ -114,6 +106,7 @@ class MigrateSI110221(Command):
 
         for old_vmi in old_vm.get('virtual_machine_interface_back_refs', []):
             old_vmi.fetch()
+            self._remove_back_ref(old_vm, old_vmi)
             new_vmi = self._migrate_vmi(old_vmi, new_vm, si)
             self._add_back_ref(new_vm, new_vmi)
 
@@ -151,14 +144,15 @@ class MigrateSI110221(Command):
 
         for old_vm in old_si.get('virtual_machine_back_refs', []):
             old_vm.fetch()
+            self._remove_back_ref(old_si, old_vm)
             # VM index is the last char of the fq_name
             new_vm = self._migrate_vm(old_vm, str(old_vm.fq_name)[-1], new_si)
             self._add_back_ref(new_si, new_vm)
 
         if not re_use:
             self._remove_back_ref(old_si, si_target)
-            self._add_back_ref(new_si, si_target)
             self._delete_res(old_si)
+            self._add_back_ref(new_si, si_target)
 
     def __call__(self, paths=None, dry_run=False, check=False):
         self.dry_run = dry_run
