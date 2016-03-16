@@ -48,10 +48,11 @@ class MigrateSI110221(Command):
         new_fq_name = '%s__%s-%s' % (str(si.parent.fq_name).replace(':', '__'), si.fq_name[-1], itf_type)
 
         # there is 2 left itf so migrate the iip only once
-        if old_iip.fq_name == new_fq_name:
-            printo('Already migrated %s. Skip' % old_iip)
+        if str(old_iip.fq_name) == new_fq_name:
+            printo('Already migrated %s. Skip' % old_iip.fq_name)
             return old_iip
 
+        self._delete_res(old_iip)
         iip = copy.deepcopy(old_iip)
 
         del iip['uuid']
@@ -59,7 +60,6 @@ class MigrateSI110221(Command):
         iip['display_name'] = new_fq_name
         iip['name'] = new_fq_name
         self._create_res(iip)
-        self._delete_res(old_iip)
 
         return iip
 
@@ -98,7 +98,10 @@ class MigrateSI110221(Command):
                           fq_name=[new_fq_name],
                           display_name=new_fq_name + '__network-namespace',
                           name=new_fq_name)
-        self._create_res(new_vm)
+        try:
+            self._create_res(new_vm)
+        except Conflict:
+            return old_vm
 
         for vr in old_vm.get('virtual_router_back_refs', []):
             self._remove_back_ref(old_vm, vr)
@@ -169,11 +172,11 @@ class MigrateSI110221(Command):
             except (KeyError, IndexError):
                 printo('SI %s has no template, skipping.' % si.uuid)
                 continue
-            vm = si.get('virtual_machine_back_refs', [None])[0]
-            if vm is None:
+            vms = si.get('virtual_machine_back_refs', [])
+            if not vms:
                 printo('SI %s has no VM, skipping.' % si.uuid)
 
-            if si.fq_name[-1] in str(vm.fq_name):
+            if all([si.fq_name[-1] in str(vm.fq_name) for vm in vms]):
                 continue
 
             printo('Found lbaas SI to migrate %s (%s)' % (si.path, si.fq_name))
