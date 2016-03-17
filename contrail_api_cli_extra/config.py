@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.commands import Command, Arg
+from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.resource import Resource, Collection
 
 from .utils import ip_type

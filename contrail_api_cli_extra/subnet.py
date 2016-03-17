@@ -4,7 +4,7 @@ from six import text_type
 import json
 import netaddr
 
-from contrail_api_cli.commands import Command, Arg
+from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import ResourceNotFound
 

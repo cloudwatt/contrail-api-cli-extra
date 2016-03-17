@@ -5,7 +5,7 @@ import logging
 from pycassa import ConnectionPool, ColumnFamily
 from urllib import unquote_plus
 
-from contrail_api_cli.commands import Command, Arg
+from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.exceptions import ResourceNotFound
 

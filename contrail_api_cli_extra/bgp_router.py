@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from six import text_type
 import json
 
-from contrail_api_cli.commands import Command, Arg
+from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.exceptions import CommandError
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import FQName

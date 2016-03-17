@@ -8,7 +8,7 @@ from six import text_type
 import logging
 from collections import OrderedDict
 
-from contrail_api_cli.commands import Command, Arg
+from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.manager import CommandManager
 from contrail_api_cli.exceptions import CommandNotFound, CommandError
 from contrail_api_cli.utils import printo, continue_prompt

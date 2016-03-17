@@ -5,7 +5,7 @@ import copy
 
 from keystoneclient.exceptions import Conflict
 
-from contrail_api_cli.commands import Command, Arg, expand_paths
+from contrail_api_cli.command import Command, Arg, expand_paths
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import printo, FQName
 

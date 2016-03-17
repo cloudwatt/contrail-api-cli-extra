@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from contrail_api_cli.commands import Command, Arg, expand_paths
+from contrail_api_cli.command import Command, Arg, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo
 
