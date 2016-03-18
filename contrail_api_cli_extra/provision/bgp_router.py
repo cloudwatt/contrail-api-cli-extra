@@ -8,7 +8,7 @@ from contrail_api_cli.exceptions import CommandError
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import FQName
 
-from .utils import ip_type, port_type, md5_type, RouteTargetAction
+from ..utils import ip_type, port_type, md5_type, RouteTargetAction
 
 ADDRESS_FAMILIES = ['route-target', 'inet-vpn', 'e-vpn', 'erm-vpn',
                     'inet6-vpn']

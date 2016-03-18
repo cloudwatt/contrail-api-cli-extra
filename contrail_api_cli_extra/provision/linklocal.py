@@ -6,7 +6,7 @@ from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import CommandError, ResourceNotFound
 
-from .utils import ip_type
+from ..utils import ip_type
 
 
 class Linklocal(Command):

@@ -8,7 +8,7 @@ from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import ResourceNotFound
 
-from .utils import network_type
+from ..utils import network_type
 
 
 class Subnet(Command):

@@ -5,7 +5,7 @@ import json
 from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.resource import Resource, Collection
 
-from .utils import ip_type
+from ..utils import ip_type
 
 
 class VRouter(Command):

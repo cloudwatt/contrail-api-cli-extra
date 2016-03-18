@@ -6,7 +6,7 @@ from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.exceptions import ResourceNotFound
 from contrail_api_cli.resource import Resource
 
-from .utils import RouteTargetAction
+from ..utils import RouteTargetAction
 
 
 class RouteTarget(Command):

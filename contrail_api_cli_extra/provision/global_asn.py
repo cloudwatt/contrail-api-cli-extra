@@ -6,7 +6,7 @@ from contrail_api_cli.command import Command, Arg
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import ResourceNotFound
 
-from .utils import RouteTargetAction
+from ..utils import RouteTargetAction
 
 
 class SetGlobalASN(Command):
