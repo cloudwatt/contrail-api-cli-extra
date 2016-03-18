@@ -22,7 +22,7 @@ class RPF(Command):
                 vn['virtual_network_properties'] = {
                     "allow_transit": None,
                     "forwarding_mode": None,
-                    "network_id": vn['virtual_network_id'],
+                    "network_id": vn.get('virtual_network_id', None),
                     "vxlan_network_identifier": None
                 }
             if off:
