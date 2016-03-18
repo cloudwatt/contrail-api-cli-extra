@@ -62,8 +62,8 @@ setup(
         ],
         'contrail_api_cli.command': [
             'provision = contrail_api_cli_extra.provision.provision:Provision',
-            'clean-orphaned-acl = contrail_api_cli_extra.cleaner.orphaned_acl:OrphanedACL',
-            'clean-stale-lbaas-si = contrail_api_cli_extra.cleaner.lbaas:CleanStaleLBaasSI',
+            'clean-orphaned-acl = contrail_api_cli_extra.clean.orphaned_acl:OrphanedACL',
+            'clean-stale-lbaas-si = contrail_api_cli_extra.clean.lbaas:CleanStaleLBaasSI',
             'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
             'rpf = contrail_api_cli_extra.misc.rpf:RPF',
         ]
