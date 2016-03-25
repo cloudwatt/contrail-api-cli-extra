@@ -12,39 +12,36 @@ from ..utils import network_type
 
 
 class Subnet(Command):
-    virtual_network_fqname = Arg('--virtual-network-fqname',
-                                 required=True,
-                                 help='VN fqname (eg: default-domain:admin:net)')
-
-    def _get_network_ipam_subnets(self):
-        if 'network_ipam_refs' not in self.vn:
+    def _get_network_ipam_subnets(self, vn=None):
+        if 'network_ipam_refs' not in vn:
             ipam_ref = {
                 "attr": {
                     "ipam_subnets": []
                 },
                 "to": ["default-domain", "default-project", "default-network-ipam"]
             }
-            self.vn['network_ipam_refs'] = []
-            self.vn['network_ipam_refs'].append(ipam_ref)
-        return self.vn['network_ipam_refs'][0]['attr']['ipam_subnets']
-
-    def __call__(self, virtual_network_fqname=None):
-        self.vn = Resource('virtual-network',
-                           fq_name=virtual_network_fqname,
-                           fetch=True)
+            vn['network_ipam_refs'] = []
+            vn['network_ipam_refs'].append(ipam_ref)
+        return vn['network_ipam_refs'][0]['attr']['ipam_subnets']
 
 
 class SetSubnets(Subnet):
     description = 'Set subnets to virtual-network'
+    virtual_network_fqname = Arg('--virtual-network-fqname',
+                                 required=True,
+                                 help='VN fqname (eg: default-domain:admin:net)')
     cidrs = Arg(nargs="+", metavar='CIDR',
                 help='subnet CIDR',
                 type=network_type,
                 default=[])
 
     def __call__(self, virtual_network_fqname=None, cidrs=None):
-        super(SetSubnets, self).__call__(virtual_network_fqname)
+        vn = Resource('virtual-network',
+                      fq_name=virtual_network_fqname,
+                      fetch=True)
+
         cidrs = [netaddr.IPNetwork(cidr) for cidr in cidrs]
-        ipam_subnets = self._get_network_ipam_subnets()
+        ipam_subnets = self._get_network_ipam_subnets(vn)
         ipam_subnets_current = [{
             'subnet': {
                 'ip_prefix': s['subnet']['ip_prefix'],
@@ -68,20 +65,28 @@ class SetSubnets(Subnet):
                 ipam_subnets.append(subnet)
                 modified = True
         if modified:
-            self.vn.save()
+            vn.save()
 
 
 class GetSubnets(Subnet):
     description = 'Get virtual-network subnets'
+    virtual_network_fqnames = Arg('--virtual-network-fqnames',
+                                  nargs='+',
+                                  required=True,
+                                  help='List of VN fqnames (eg: default-domain:admin:net)')
 
-    def __call__(self, virtual_network_fqname=None):
-        try:
-            super(GetSubnets, self).__call__(virtual_network_fqname)
-            ipam_subnets = self._get_network_ipam_subnets()
-            if ipam_subnets:
-                return json.dumps([{'virtual_network_fqname': virtual_network_fqname,
-                                    'cidrs': ['%s/%s' % (s['subnet']['ip_prefix'], s['subnet']['ip_prefix_len'])
-                                              for s in ipam_subnets]}], indent=2)
-        except ResourceNotFound:
-            pass
-        return json.dumps([])
+    def __call__(self, virtual_network_fqnames=None):
+        res = []
+        for virtual_network_fqname in virtual_network_fqnames:
+            try:
+                vn = Resource('virtual-network',
+                              fq_name=virtual_network_fqname,
+                              fetch=True)
+                ipam_subnets = self._get_network_ipam_subnets(vn)
+                if ipam_subnets:
+                    res.append({'virtual_network_fqname': virtual_network_fqname,
+                                'cidrs': ['%s/%s' % (s['subnet']['ip_prefix'], s['subnet']['ip_prefix_len'])
+                                          for s in ipam_subnets]})
+            except ResourceNotFound:
+                pass
+        return json.dumps(res, indent=2)
