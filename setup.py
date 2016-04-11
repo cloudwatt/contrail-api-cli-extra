@@ -64,6 +64,7 @@ setup(
             'provision = contrail_api_cli_extra.provision.provision:Provision',
             'clean-orphaned-acl = contrail_api_cli_extra.clean.orphaned_acl:OrphanedACL',
             'clean-stale-lbaas-si = contrail_api_cli_extra.clean.lbaas:CleanStaleLBaasSI',
+            'clean-si-scheduling = contrail_api_cli_extra.clean.si_scheduling:CleanSIScheduling',
             'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
             'rpf = contrail_api_cli_extra.misc.rpf:RPF',
         ]
