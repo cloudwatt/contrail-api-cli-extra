@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 install_requires = [
     #'contrail-api-cli>=0.1b1'
     'pycassa',
+    'kazoo',
 ]
 test_requires = []
 
