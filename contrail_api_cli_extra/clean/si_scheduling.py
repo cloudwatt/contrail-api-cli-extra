@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from contrail_api_cli.command import Command, Arg, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map
-from contrail_api_cli.exceptions import ResourceNotFound
+from contrail_api_cli.client import HTTPError
 
 
 class CleanSIScheduling(Command):
@@ -28,7 +28,7 @@ class CleanSIScheduling(Command):
     def _check_si(self, si, check):
         try:
             si.fetch()
-        except ResourceNotFound:
+        except HTTPError:
             return
         for vm in si.get('virtual_machine_back_refs', []):
             vm.fetch()
