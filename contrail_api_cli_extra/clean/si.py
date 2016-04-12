@@ -21,7 +21,7 @@ class CleanSIScheduling(Command):
 
     def _clean_vm(self, vm):
         for vr in vm.get('virtual_router_back_refs')[1:]:
-            if not self._dry_run:
+            if not self.dry_run:
                 vm.remove_back_ref(vr)
             printo("Removed %s from %s" % (vr.fq_name, vm.uuid))
 
