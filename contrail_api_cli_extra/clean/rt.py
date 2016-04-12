@@ -13,11 +13,11 @@ from contrail_api_cli.exceptions import CommandError
 from ..utils import server_type
 
 
-class CleanStaleRT(Command):
+class CleanRT(Command):
     check = Arg('--check', '-c',
                 default=False,
                 action="store_true",
-                help='Just check for stale RT')
+                help='Just check RTs')
     dry_run = Arg('--dry-run', '-n',
                   default=False,
                   action="store_true",
@@ -29,10 +29,19 @@ class CleanStaleRT(Command):
                     type=server_type,
                     default='localhost:2181')
 
-    def _clean_rt(self, rt):
+    def _get_zk_node(self, rt):
         rt_id = int(rt['name'].split(':')[-1])
-        zk_node = '/id/bgp/route-targets/%010d' % rt_id
+        return '/id/bgp/route-targets/%010d' % rt_id
 
+    def _ensure_lock(self, rt):
+        zk_node = self._get_zk_node(rt)
+        if not self.zk_client.exists(zk_node):
+            if not self.dry_run:
+                self.zk_client.create(zk_node)
+            printo("Added missing ZK lock %s" % zk_node)
+
+    def _clean_rt(self, rt):
+        zk_node = self._get_zk_node(rt)
         if self.zk_client.exists(zk_node):
             if not self.dry_run:
                 self.zk_client.delete(zk_node)
@@ -58,6 +67,8 @@ class CleanStaleRT(Command):
             printo('RT %s (%s) staled' % (rt.path, rt.fq_name))
             if check is not True:
                 self._clean_rt(rt)
+        else:
+            self._ensure_lock(rt)
 
     def __call__(self, paths=None, dry_run=False, check=False, zk_server=None):
         self.zk_client = KazooClient(hosts=zk_server, timeout=1.0)
