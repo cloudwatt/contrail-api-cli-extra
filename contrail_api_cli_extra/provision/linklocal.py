@@ -38,7 +38,7 @@ class Linklocal(Command):
             raise CommandError('--fabric_dns_service_name or --fabric_service_ip required')
 
         self.linklocal_entry = {
-            'ip_fabric_DNS_service_name': fabric_dns_service_name,
+            'ip_fabric_dns_service_name': fabric_dns_service_name,
             'ip_fabric_service_ip': [],
             'ip_fabric_service_port': fabric_service_port,
             'linklocal_service_ip': service_ip,
