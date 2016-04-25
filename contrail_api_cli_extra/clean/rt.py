@@ -14,6 +14,7 @@ from ..utils import server_type
 
 
 class CleanRT(Command):
+    description = "Clean stale route targets"
     check = Arg('--check', '-c',
                 default=False,
                 action="store_true",

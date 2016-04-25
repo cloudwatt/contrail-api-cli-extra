@@ -7,6 +7,7 @@ from contrail_api_cli.utils import printo
 
 
 class CleanStaleLBaasSI(Command):
+    description = "Clean stale lbaas SIs"
     check = Arg('--check', '-c',
                 default=False,
                 action="store_true",

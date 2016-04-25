@@ -8,6 +8,7 @@ from contrail_api_cli.client import HTTPError
 
 
 class CleanSIScheduling(Command):
+    description = "Clean bad vrouter scheduling"
     check = Arg('--check', '-c',
                 default=False,
                 action="store_true",
