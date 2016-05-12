@@ -61,8 +61,24 @@ class Provision(Command):
         except CommandNotFound:
             return False
 
+    def _get_add_command(self, key):
+        if self._is_property(key):
+            action = Actions.SET
+        else:
+            action = Actions.ADD
+        return self._get_command(key, action)
+
     def _get_command(self, key, action):
-        return self.mgr.get('%s-%s' % (action, key))
+        try:
+            return self.mgr.get('%s-%s' % (action, key))
+        except CommandNotFound:
+            raise CommandError("No command to %s %s" % (action, key))
+
+    def _get_command_args(self, cmd):
+        argspec = inspect.getargspec(cmd.__call__)
+        if len(argspec.args) > 1:
+            return [arg for arg in argspec.args[1:]]
+        return []
 
     def _call_command(self, cmd, defaults={}):
         """Call a command.
@@ -71,10 +87,8 @@ class Provision(Command):
         as a dict in the defaults kwarg.
         """
         kwargs = {}
-        argspec = inspect.getargspec(cmd.__call__)
-        if len(argspec.args) > 1:
-            for arg in argspec.args[1:]:
-                kwargs[arg] = defaults.get(arg)
+        for arg in self._get_command_args(cmd):
+            kwargs[arg] = defaults.get(arg)
         logger.debug('Calling %s with %s' % (cmd, kwargs))
         return cmd(**kwargs)
 
@@ -139,14 +153,9 @@ class Provision(Command):
         validate them using the command parser and set default values
         where needed.
         """
-        if self._is_property(key):
-            action = Actions.SET
-        else:
-            action = Actions.ADD
-        try:
-            cmd = self._get_command(key, action)
-        except CommandNotFound:
-            raise CommandError("No command to %s %s" % (action, key))
+        cmd = self._get_add_command(key)
+
+        # default args values from argparse parser
         for action in cmd.parser._actions:
             if action.dest == 'help':
                 continue
@@ -162,6 +171,12 @@ class Provision(Command):
                         values[action.dest] = action.default
                 except argparse.ArgumentError as e:
                     raise CommandError('Error in %s: %s' % (key, text_type(e)))
+
+        # remove unknown args from call
+        for arg, value in copy.deepcopy(values.items()):
+            if arg not in self._get_command_args(cmd):
+                logger.debug('Unknown arg %s for %s. Ignored' % (arg, cmd.__call__))
+                del values[arg]
         return values
 
     def _diff_envs(self, current, wanted):
@@ -253,6 +268,7 @@ class Provision(Command):
         current_env = self._get_current_env(wanted_env.keys())
         current_env = self._normalize_env(current_env)
         current_env = self._setup_defaults_values(current_env)
+        current_env = self._validate_env(current_env)
 
         diff_env = self._diff_envs(current_env, wanted_env)
 
