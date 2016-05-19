@@ -3,95 +3,125 @@ from __future__ import unicode_literals
 
 from contrail_api_cli.command import Command, Arg, expand_paths
 from contrail_api_cli.resource import Collection
-from contrail_api_cli.utils import printo
+from contrail_api_cli.utils import printo, parallel_map
 
 
-class CleanStaleLBaasSI(Command):
-    description = "Clean stale lbaas SIs"
+class CleanStaleSI(Command):
+    description = "Clean stale SIs"
     check = Arg('--check', '-c',
                 default=False,
                 action="store_true",
-                help='Just check for stale LBaas SIs')
+                help='Just check for stale SIs')
     dry_run = Arg('--dry-run', '-n',
                   default=False,
                   action="store_true",
                   help='Run this command in dry-run mode')
-    paths = Arg(nargs="*", help="LBaas SI path(s)",
+    paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')
 
-    def _is_stale(self, si):
-        """Return True is the SI is stale.
+    def _is_stale_snat(self, si):
+        """Return True if the snat SI is stale.
+        """
+        if 'logical_router_back_refs' not in si:
+            printo('[%s] No logical router attached to SI' % si.uuid)
+            return True
+
+        return False
+
+    def _is_stale_lbaas(self, si):
+        """Return True if the lbaas SI is stale.
         """
 
         if 'loadbalancer_pool_back_refs' not in si:
-            printo('No pool attached to SI')
+            printo('[%s] No pool attached to SI' % si.uuid)
             return True
 
         pool = si['loadbalancer_pool_back_refs'][0]
         pool.fetch()
 
         if 'virtual_ip_back_refs' not in pool:
-            printo('No VIP attached to pool')
+            printo('[%s] No VIP attached to pool' % si.uuid)
             return True
 
         vip = pool['virtual_ip_back_refs'][0]
         vip.fetch()
 
         if 'virtual_machine_interface_refs' not in vip:
-            printo('No VMI for VIP')
+            printo('[%s] No VMI for VIP' % si.uuid)
             return True
 
         vip_vmi = vip['virtual_machine_interface_refs'][0]
         vip_vmi.fetch()
 
         if 'instance_ip_back_refs' not in vip_vmi:
-            printo('No IIP found for VIP VMI')
+            printo('[%s] No IIP found for VIP VMI' % si.uuid)
             return True
 
         return False
 
-    def _remove_back_ref(self, r1, r2):
-        printo('Remove back_ref from %s to %s' % (str(r1.path), str(r2.path)))
+    def _remove_back_ref(self, si, r1, r2):
+        printo('[%s] Remove back_ref from %s to %s' % (si.uuid, str(r1.path), str(r2.path)))
         if not self.dry_run:
             r1.remove_back_ref(r2)
 
-    def _delete_res(self, r):
-        printo('Delete %s' % str(r.path))
+    def _delete_res(self, si, r):
+        printo('[%s] Delete %s' % (si.uuid, str(r.path)))
         if not self.dry_run:
             r.delete()
 
-    def _clean_si(self, si):
-        printo('Cleaning stale lbaas %s' % si.uuid)
+    def _clean_lbaas_si(self, si):
+        printo('[%s] Cleaning stale lbaas' % si.uuid)
         for pool in si.get('loadbalancer_pool_back_refs', []):
             pool.fetch()
             for vip in pool.get('virtual_ip_back_refs', []):
                 vip.fetch()
                 vip_vmis = vip.get('virtual_machine_interface_refs', [])
-                self._delete_res(vip)
+                self._delete_res(si, vip)
                 for vmi in vip_vmis:
-                    self._delete_res(vmi)
-            self._remove_back_ref(si, pool)
+                    self._delete_res(si, vmi)
+            self._remove_back_ref(si, si, pool)
+
+    def _clean_si(self, si):
         for vm in si.get('virtual_machine_back_refs', []):
             vm.fetch()
             for vr in vm.get('virtual_router_back_refs', []):
-                self._remove_back_ref(vm, vr)
+                self._remove_back_ref(si, vm, vr)
             for vmi in vm.get('virtual_machine_interface_back_refs', []):
                 vmi.fetch()
                 for fip in vmi.get('floating_ip_back_refs', []):
                     fip.fetch()
                     if len(fip['virtual_machine_interface_refs']) > 1:
-                        self._remove_back_ref(vmi, fip)
+                        self._remove_back_ref(si, vmi, fip)
                     else:
-                        self._delete_res(fip)
+                        self._delete_res(si, fip)
                 for iip in vmi.get('instance_ip_back_refs', []):
                     iip.fetch()
                     if len(iip['virtual_machine_interface_refs']) > 1:
-                        self._remove_back_ref(vmi, iip)
+                        self._remove_back_ref(si, vmi, iip)
                     else:
-                        self._delete_res(iip)
-                self._delete_res(vmi)
-            self._delete_res(vm)
-        self._delete_res(si)
+                        self._delete_res(si, iip)
+                self._delete_res(si, vmi)
+            self._delete_res(si, vm)
+        self._delete_res(si, si)
+
+    def _check_si(self, si, check=False):
+        si.fetch()
+        try:
+            si_t = si['service_template_refs'][0]
+        except (KeyError, IndexError):
+            printo('SI %s has no template, skipping.' % str(si.path))
+            return
+
+        if 'haproxy-loadbalancer-template' in si_t.fq_name and self._is_stale_lbaas(si):
+            printo('[%s] Found stale lbaas %s' % (si.uuid, str(si.fq_name)))
+            if check is not True:
+                self._clean_lbaas_si(si)
+                self._clean_si(si)
+
+        if 'netns-snat-template' in si_t.fq_name and self._is_stale_snat(si):
+            printo('[%s] Found stale SNAT %s' % (si.uuid, str(si.fq_name)))
+            if check is not True:
+                self._clean_si(si)
 
     def __call__(self, paths=None, dry_run=False, check=False):
         self.dry_run = dry_run
@@ -100,18 +130,4 @@ class CleanStaleLBaasSI(Command):
         else:
             resources = expand_paths(paths,
                                      predicate=lambda r: r.type == 'service-instance')
-        for si in resources:
-            si.fetch()
-            try:
-                si_t = si['service_template_refs'][0]
-            except (KeyError, IndexError):
-                printo('SI %s has no template, skipping.' % str(si.path))
-                continue
-            # don't use other SIs
-            if 'haproxy-loadbalancer-template' not in si_t.fq_name:
-                continue
-
-            if self._is_stale(si):
-                printo('Found stale lbaas %s (%s)' % (str(si.path), str(si.fq_name)))
-                if check is not True:
-                    self._clean_si(si)
+        parallel_map(self._check_si, resources, kwargs={'check': check}, workers=50)
