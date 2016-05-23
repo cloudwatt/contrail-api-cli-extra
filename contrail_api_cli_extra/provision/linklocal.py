@@ -112,7 +112,7 @@ class ListLinklocal(Command):
                 return json.dumps([{'service_name': service['linklocal_service_name'],
                                     'service_ip': service['linklocal_service_ip'],
                                     'service_port': service['linklocal_service_port'],
-                                    'fabric_dns_service_name': service.get('ip_fabric_DNS_service_name'),
+                                    'fabric_dns_service_name': service.get('ip_fabric_dns_service_name'),
                                     'fabric_service_ip': service['ip_fabric_service_ip'],
                                     'fabric_service_port': service['ip_fabric_service_port']}
                                   for service in vrouter_config['linklocal_services'].get('linklocal_service_entry', [])], indent=2)
