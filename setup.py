@@ -69,6 +69,7 @@ setup(
             'clean-si-scheduling = contrail_api_cli_extra.clean.si:CleanSIScheduling',
             'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
             'rpf = contrail_api_cli_extra.misc.rpf:RPF',
+            'dot = contrail_api_cli_extra.misc.dot:Dot',
         ]
     },
     classifiers=[
