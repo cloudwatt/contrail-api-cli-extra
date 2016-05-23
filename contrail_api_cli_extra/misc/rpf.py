@@ -32,4 +32,4 @@ class RPF(Command):
                 vn['virtual_network_properties']['rpf'] = None
                 vn.save()
             else:
-                return 'on' if vn['virtual_network_properties']['rpf'] is None else 'off'
+                return 'on' if vn['virtual_network_properties'].get('rpf') is None else 'off'
