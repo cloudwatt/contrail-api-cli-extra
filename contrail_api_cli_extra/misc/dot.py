@@ -12,21 +12,29 @@ from contrail_api_cli.exceptions import ResourceMissing
 from contrail_api_cli.command import Command, Arg, expand_paths
 
 
+def network_attributes(network):
+    acc = []
+    for ipam in network['network_ipam_refs']:
+        for s in ipam['attr']['ipam_subnets']:
+            acc.append("%s/%s" % (s['subnet']['ip_prefix'],s['subnet']['ip_prefix_len']))
+    return acc
+
 rendering_map = {"routing-instance": {"color": "#E77AF4", "alias":  "ri"},
                  "route-target": {
                      "color": "#F47A7A",
                      "alias":  "rt",
                      "attributes": lambda r: r.get("display_name", "").split(":")[1:]},
                  "virtual-machine-interface": {"color": "#7AF4D0", "alias":  "vmi"},
-                 "virtual-network": {"color": "#7AD3F4", "alias":  "vn"},
+                 "virtual-network": {"color": "#7AD3F4", "alias":  "vn",
+                                     "attributes": network_attributes},
                  "logical-router": {"color": "white", "alias":  "lr"},
                  "instance-ip": {"color": "#E6F521", "alias":  "ip",
                                  "attributes": lambda r: [r.get("instance_ip_address")]},
                  "service-instance": {"color": "#CDEE93", "alias":  "si"},
                  "virtual-router": {"color": "white", "alias":  "vr"},
                  "service-template": {"color": "white", "alias":  "st"},
+                 "network-ipam": {"color": "white", "alias":  "ipam"},
                  "virtual-machine": {"color": "#F4C07A", "alias":  "vm"}}
-
 
 def default_renderer(path_name):
     return {"color": "white", "alias": path_name}
