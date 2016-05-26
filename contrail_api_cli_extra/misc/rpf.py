@@ -1,14 +1,12 @@
-from contrail_api_cli.command import Command, Arg, expand_paths
+from contrail_api_cli.command import Command, Arg, Option, expand_paths
 
 
 class RPF(Command):
     description = 'enable/disable RPF on network'
-    on = Arg('--on',
-             action='store_true',
-             help='Enable RPF')
-    off = Arg('--off',
-              action='store_true',
-              help='Disable RPF')
+    on = Option(action='store_true',
+                help='Enable RPF')
+    off = Option(action='store_true',
+                 help='Disable RPF')
     paths = Arg(nargs='*',
                 metavar='vn',
                 help='List of VN')

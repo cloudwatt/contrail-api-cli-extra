@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Option
 from contrail_api_cli.exceptions import ResourceNotFound
 from contrail_api_cli.resource import Resource
 
@@ -10,9 +10,8 @@ from ..utils import RouteTargetAction
 
 
 class RouteTarget(Command):
-    virtual_network_fqname = Arg('--virtual-network-fqname',
-                                 required=True,
-                                 help="Virtual network FQName")
+    virtual_network_fqname = Option(required=True,
+                                    help="Virtual network FQName")
 
     def __call__(self, virtual_network_fqname=None):
         self.vn = Resource('virtual-network', fq_name=virtual_network_fqname,
@@ -20,23 +19,21 @@ class RouteTarget(Command):
 
 
 class RouteTargetAction(RouteTarget):
-    route_target_list = Arg('--route-target-list',
-                            nargs='+',
-                            action=RouteTargetAction,
-                            help="Imported and exported route target '<ASN>:<route target number>' (default: %(default)s)",
-                            default=[])
-    import_route_target_list = Arg('--import-route-target-list',
-                                   nargs='+',
-                                   action=RouteTargetAction,
-                                   help="Imported route target '<ASN>:<route target number>' (default: %(default)s) \
-                                         /!\\ Not supported until Contrail 3.0",
-                                   default=[])
-    export_route_target_list = Arg('--export-route-target-list',
-                                   nargs='+',
-                                   action=RouteTargetAction,
-                                   help="Exported route target '<ASN>:<route target number>' (default: %(default)s) \
-                                         /!\\ Not supported until Contrail 3.0",
-                                   default=[])
+    route_target_list = Option(nargs='+',
+                               action=RouteTargetAction,
+                               help="Imported and exported route target \
+                                     '<ASN>:<route target number>' (default: %(default)s)",
+                               default=[])
+    import_route_target_list = Option(nargs='+',
+                                      action=RouteTargetAction,
+                                      help="Imported route target '<ASN>:<route target number>' (default: %(default)s) \
+                                            /!\\ Not supported until Contrail 3.0",
+                                      default=[])
+    export_route_target_list = Option(nargs='+',
+                                      action=RouteTargetAction,
+                                      help="Exported route target '<ASN>:<route target number>' (default: %(default)s) \
+                                            /!\\ Not supported until Contrail 3.0",
+                                      default=[])
 
     def __call__(self, virtual_network_fqname=None, route_target_list=None,
                  import_route_target_list=None, export_route_target_list=None):

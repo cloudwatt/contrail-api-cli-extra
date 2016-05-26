@@ -9,7 +9,7 @@ import networkx as nx
 
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import ResourceMissing
-from contrail_api_cli.command import Command, Arg, expand_paths
+from contrail_api_cli.command import Command, Arg, Option, expand_paths
 
 
 def network_attributes(network):
@@ -22,7 +22,7 @@ def network_attributes(network):
 rendering_map = {"routing-instance": {"color": "#E77AF4", "alias":  "ri"},
                  "route-target": {
                      "color": "#F47A7A",
-                     "alias":  "rt",
+                     "alias": "rt",
                      "attributes": lambda r: r.get("display_name", "").split(":")[1:]},
                  "virtual-machine-interface": {"color": "#7AF4D0", "alias":  "vmi"},
                  "virtual-network": {"color": "#7AD3F4", "alias":  "vn",
@@ -61,11 +61,10 @@ def _node_rendering(path, resource=None):
 
 class Dot(Command):
     description = "Create a dot file representing provided resources"
-    filename = Arg('-f', "--filename-output", help="Output Dot filename", required=True)
-    excludes = Arg('-e', "--exclude-resource-type", help="Exclude resource types",
-                   action="append", default=[], dest='excludes')
+    filename_output = Option('-f', help="Output Dot filename", required=True)
+    exclude_resource_type = Option('-e', help="Exclude resource types",
+                                   action="append", default=[], dest='excludes')
     paths = Arg(help="Resource URL", metavar='path', nargs="*")
-
 
     def __call__(self, paths=None, filename_output=None, excludes=[]):
         resources = expand_paths(paths,

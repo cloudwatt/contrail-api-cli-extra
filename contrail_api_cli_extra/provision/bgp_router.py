@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from six import text_type
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.exceptions import CommandError
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import FQName
@@ -22,22 +21,22 @@ class BGPRouter(Command):
 
 class AddBGPRouter(BGPRouter):
     description = "Add BgpRouter to the API server"
-    router_ip = Arg('--router-ip', help="BGP router IP", type=ip_type)
-    router_port = Arg('--router-port', help="BGP port (default: %(default)s)",
-                      type=port_type, default=179)
-    router_asn = Arg('--router-asn', type=RouteTargetAction.asn_type, default=64512,
-                     help="Autonomous System Number (default: %(default)s)")
-    router_type = Arg('--router-type', default='contrail',
-                      help="BGP router type ('contrail' for Contrail control \
-                            nodes and '<WHATEVER>' for non Contrail BGP \
-                            routers) (default: %(default)s)")
-    router_address_families = Arg('--router-address-families', nargs='+',
-                                  help="Address family list \
-                                        (default: %(default)s)",
-                                  choices=ADDRESS_FAMILIES,
-                                  default=ADDRESS_FAMILIES)
-    router_md5 = Arg('--router-md5', default=None, type=md5_type,
-                     help="MD5 authentication (default: %(default)s)")
+    router_ip = Option(help="BGP router IP", type=ip_type)
+    router_port = Option(help="BGP port (default: %(default)s)",
+                         type=port_type, default=179)
+    router_asn = Option(type=RouteTargetAction.asn_type, default=64512,
+                        help="Autonomous System Number (default: %(default)s)")
+    router_type = Option(default='contrail',
+                         help="BGP router type ('contrail' for Contrail control \
+                               nodes and '<WHATEVER>' for non Contrail BGP \
+                               routers) (default: %(default)s)")
+    router_address_families = Option(nargs='+',
+                                     help="Address family list \
+                                           (default: %(default)s)",
+                                     choices=ADDRESS_FAMILIES,
+                                     default=ADDRESS_FAMILIES)
+    router_md5 = Option(default=None, type=md5_type,
+                        help="MD5 authentication (default: %(default)s)")
 
     def __call__(self, router_name=None, router_ip=None, router_port=None,
                  router_asn=None, router_address_families=[],
@@ -89,7 +88,7 @@ class AddBGPRouter(BGPRouter):
                         'attributes': [{
                             'address_families': {
                                 'family': router_address_families,
-                                },
+                            },
                             'auth_data': auth_data,
                         }],
                     }],

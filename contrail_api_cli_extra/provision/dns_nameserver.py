@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import CommandError
 
@@ -10,10 +10,9 @@ from ..utils import ip_type
 
 
 class DNSNameserver(Command):
-    network_ipam_fqname = Arg('--network-ipam-fqname',
-                              metavar='fqname',
-                              help='Network IPAM fqname (default: %(default)s)',
-                              default='default-domain:default-project:default-network-ipam')
+    network_ipam_fqname = Option(metavar='fqname',
+                                 help='Network IPAM fqname (default: %(default)s)',
+                                 default='default-domain:default-project:default-network-ipam')
 
     def __call__(self, network_ipam_fqname=None):
         self.ipam = Resource('network-ipam', fq_name=network_ipam_fqname,

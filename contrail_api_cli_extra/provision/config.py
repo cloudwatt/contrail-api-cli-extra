@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.resource import Resource, Collection
 
 from ..utils import ip_type
@@ -14,10 +14,9 @@ class Config(Command):
 
 class AddConfig(Config):
     description = 'Add config node'
-    config_ip = Arg('--config-ip',
-                    help='IP of config node',
-                    type=ip_type,
-                    required=True)
+    config_ip = Option(help='IP of config node',
+                       type=ip_type,
+                       required=True)
 
     def __call__(self, config_name=None, config_ip=None):
 

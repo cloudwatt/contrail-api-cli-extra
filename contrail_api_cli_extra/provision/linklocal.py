@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Option
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import CommandError, ResourceNotFound
 
@@ -10,26 +10,20 @@ from ..utils import ip_type
 
 
 class Linklocal(Command):
-    service_name = Arg('--service-name',
-                       help='Linklocal service name',
-                       required=True)
-    service_ip = Arg('--service-ip',
-                     help='Linklocal service IP',
-                     type=ip_type,
-                     required=True)
-    service_port = Arg('--service-port',
-                       help='Linklocal service port',
-                       type=int,
-                       required=True)
-    fabric_dns_service_name = Arg('--fabric-dns-service-name',
-                                  help='DNS service name in the fabric')
-    fabric_service_ip = Arg('--fabric-service-ip',
-                            help='Service IP in the fabric',
-                            type=ip_type)
-    fabric_service_port = Arg('--fabric-service-port',
-                              help='Service port in the fabric',
-                              type=int,
-                              required=True)
+    service_name = Option(help='Linklocal service name',
+                          required=True)
+    service_ip = Option(help='Linklocal service IP',
+                        type=ip_type,
+                        required=True)
+    service_port = Option(help='Linklocal service port',
+                          type=int,
+                          required=True)
+    fabric_dns_service_name = Option(help='DNS service name in the fabric')
+    fabric_service_ip = Option(help='Service IP in the fabric',
+                               type=ip_type)
+    fabric_service_port = Option(help='Service port in the fabric',
+                                 type=int,
+                                 required=True)
 
     def __call__(self, service_name=None, service_ip=None, service_port=None,
                  fabric_dns_service_name=None, fabric_service_ip=None, fabric_service_port=None):

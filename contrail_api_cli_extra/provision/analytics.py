@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.resource import Resource, Collection
 
 from ..utils import ip_type
@@ -14,10 +14,9 @@ class Analytics(Command):
 
 class AddAnalytics(Analytics):
     description = 'Add analytics node'
-    analytics_ip = Arg('--analytics-ip',
-                       help='IP of compute node',
-                       type=ip_type,
-                       required=True)
+    analytics_ip = Option(help='IP of compute node',
+                          type=ip_type,
+                          required=True)
 
     def __call__(self, analytics_name=None, analytics_ip=None):
         global_config = Resource('global-system-config',

@@ -5,7 +5,7 @@ import logging
 from pycassa import ConnectionPool, ColumnFamily
 from urllib import unquote_plus
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Option
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.exceptions import ResourceNotFound
 
@@ -36,19 +36,17 @@ def decode_string(dec_str, encoding='utf-8'):
 
 class OrphanedACL(Command):
     description = "Clean all orphan ACLs that does not have parent"
-    force = Arg('-f', '--force',
-                help="Delete orphan ACL (default: %(default)s)",
-                default=False,
-                action="store_true")
-    parent_type = Arg('--parent-type',
-                      help="Parent type the ACL should have (default: %(default)s)",
-                      choices=['security-group', 'virtual-network'],
-                      default='security-group')
-    cassandra_servers = Arg('--cassandra-servers',
-                            help="Cassandra server list' (default: %(default)s)",
-                            nargs='+',
-                            type=server_type,
-                            default=['localhost:9160'])
+    force = Option('-f',
+                   help="Delete orphan ACL (default: %(default)s)",
+                   default=False,
+                   action="store_true")
+    parent_type = Option(help="Parent type the ACL should have (default: %(default)s)",
+                         choices=['security-group', 'virtual-network'],
+                         default='security-group')
+    cassandra_servers = Option(help="Cassandra server list' (default: %(default)s)",
+                               nargs='+',
+                               type=server_type,
+                               default=['localhost:9160'])
 
     def __call__(self, force=False, parent_type=None, cassandra_servers=None):
         valid_acl = []

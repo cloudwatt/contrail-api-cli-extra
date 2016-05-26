@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from kazoo.client import KazooClient
 from kazoo.handlers.threading import KazooTimeoutError
 
-from contrail_api_cli.command import Command, Arg, expand_paths
+from contrail_api_cli.command import Command, Arg, Option, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.client import HTTPError
@@ -15,20 +15,19 @@ from ..utils import server_type
 
 class CleanRT(Command):
     description = "Clean stale route targets"
-    check = Arg('--check', '-c',
-                default=False,
-                action="store_true",
-                help='Just check RTs')
-    dry_run = Arg('--dry-run', '-n',
-                  default=False,
-                  action="store_true",
-                  help='Run this command in dry-run mode')
+    check = Option('-c',
+                   default=False,
+                   action="store_true",
+                   help='Just check RTs')
+    dry_run = Option('-n',
+                     default=False,
+                     action="store_true",
+                     help='Run this command in dry-run mode')
     paths = Arg(nargs="*", help="RT path(s)",
                 metavar='path')
-    zk_server = Arg('--zk-server',
-                    help="Zookeeper server (default: %(default)s)",
-                    type=server_type,
-                    default='localhost:2181')
+    zk_server = Option(help="Zookeeper server (default: %(default)s)",
+                       type=server_type,
+                       default='localhost:2181')
 
     def _get_zk_node(self, rt):
         rt_id = int(rt['name'].split(':')[-1])

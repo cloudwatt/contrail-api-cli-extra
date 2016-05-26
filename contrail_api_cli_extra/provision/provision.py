@@ -8,7 +8,7 @@ from six import text_type
 import logging
 from collections import OrderedDict
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.manager import CommandManager
 from contrail_api_cli.exceptions import CommandNotFound, CommandError
 from contrail_api_cli.utils import printo, continue_prompt
@@ -30,10 +30,10 @@ class Provision(Command):
     description = 'Provision contrail environment'
     env_file = Arg(help='JSON file of environment to provision',
                    type=argparse.FileType('r'))
-    force = Arg('-f', '--force',
-                help="Don't ask for confirmation",
-                default=False,
-                action="store_true")
+    force = Option('-f',
+                   help="Don't ask for confirmation",
+                   default=False,
+                   action="store_true")
 
     def _get_current_env(self, keys):
         """Build the current environment of the given resources (keys).

@@ -5,21 +5,21 @@ import copy
 
 from keystoneclient.exceptions import Conflict
 
-from contrail_api_cli.command import Command, Arg, expand_paths
+from contrail_api_cli.command import Command, Arg, Option, expand_paths
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import printo, FQName
 
 
 class MigrateSI110221(Command):
     description = 'Migrate SIs from 1.10 to 2.21'
-    check = Arg('--check', '-c',
-                default=False,
-                action="store_true",
-                help='Just check for SIs to migrate')
-    dry_run = Arg('--dry-run', '-n',
-                  default=False,
-                  action="store_true",
-                  help='Run this command in dry-run mode')
+    check = Option('-c',
+                   default=False,
+                   action="store_true",
+                   help='Just check for SIs to migrate')
+    dry_run = Option('-n',
+                     default=False,
+                     action="store_true",
+                     help='Run this command in dry-run mode')
     paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')
 

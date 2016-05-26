@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.resource import Resource, Collection
 
 from ..utils import ip_type
@@ -14,14 +14,12 @@ class VRouter(Command):
 
 class AddVRouter(VRouter):
     description = 'Add vrouter'
-    vrouter_ip = Arg('--vrouter-ip',
-                     help='IP of compute node',
-                     type=ip_type,
-                     required=True)
-    vrouter_type = Arg('--vrouter-type',
-                       help='vrouter type',
-                       choices=['tor-service-mode', 'embedded'],
-                       default=None)
+    vrouter_ip = Option(help='IP of compute node',
+                        type=ip_type,
+                        required=True)
+    vrouter_type = Option(help='vrouter type',
+                          choices=['tor-service-mode', 'embedded'],
+                          default=None)
 
     def __call__(self, vrouter_ip=None, vrouter_name=None, vrouter_type=None):
 

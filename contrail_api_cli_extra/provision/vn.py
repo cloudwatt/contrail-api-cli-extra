@@ -2,17 +2,16 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.exceptions import ResourceNotFound
 from contrail_api_cli.utils import FQName
 
 
 class VN(Command):
-    project_fqname = Arg('--project-fqname',
-                         required=True,
-                         dest='project_fqname',
-                         help='Project fqname (eg: default-domain:admin)')
+    project_fqname = Option(required=True,
+                            dest='project_fqname',
+                            help='Project fqname (eg: default-domain:admin)')
 
 
 class VNAction(VN):
@@ -21,12 +20,10 @@ class VNAction(VN):
 
 class AddVN(VNAction):
     description = 'Add virtual-network'
-    external = Arg('--external',
-                   default=False,
-                   action="store_true")
-    shared = Arg('--shared',
-                 default=False,
-                 action="store_true")
+    external = Option(default=False,
+                      action="store_true")
+    shared = Option(default=False,
+                    action="store_true")
 
     def __call__(self, project_fqname=None, virtual_network_name=None, external=False, shared=False):
         vn_fqname = '%s:%s' % (project_fqname, virtual_network_name)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from contrail_api_cli.command import Command, Arg, expand_paths
+from contrail_api_cli.command import Command, Arg, Option, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.client import HTTPError
@@ -9,14 +9,14 @@ from contrail_api_cli.client import HTTPError
 
 class CleanSIScheduling(Command):
     description = "Clean bad vrouter scheduling"
-    check = Arg('--check', '-c',
-                default=False,
-                action="store_true",
-                help='Just check for bad SI scheduling')
-    dry_run = Arg('--dry-run', '-n',
-                  default=False,
-                  action="store_true",
-                  help='Run this command in dry-run mode')
+    check = Option('-c',
+                   default=False,
+                   action="store_true",
+                   help='Just check for bad SI scheduling')
+    dry_run = Option('-n',
+                     default=False,
+                     action="store_true",
+                     help='Run this command in dry-run mode')
     paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')
 
@@ -53,14 +53,14 @@ class CleanSIScheduling(Command):
 
 class CleanStaleSI(Command):
     description = "Clean stale SIs"
-    check = Arg('--check', '-c',
-                default=False,
-                action="store_true",
-                help='Just check for stale SIs')
-    dry_run = Arg('--dry-run', '-n',
-                  default=False,
-                  action="store_true",
-                  help='Run this command in dry-run mode')
+    check = Option('-c',
+                   default=False,
+                   action="store_true",
+                   help='Just check for stale SIs')
+    dry_run = Option('-n',
+                     default=False,
+                     action="store_true",
+                     help='Run this command in dry-run mode')
     paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')
 

@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import json
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Option, Arg
 from contrail_api_cli.resource import Resource, Collection
 
 
@@ -12,9 +12,8 @@ class SAS(Command):
 
 class AddSAS(SAS):
     description = 'Add service appliance set'
-    driver = Arg('--driver',
-                 required=True,
-                 help='driver python module path')
+    driver = Option(required=True,
+                    help='driver python module path')
 
     def __call__(self, appliance_set_name=None, driver=None):
         global_config = Resource('global-system-config',

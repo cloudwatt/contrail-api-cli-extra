@@ -4,7 +4,7 @@ from six import text_type
 import json
 import netaddr
 
-from contrail_api_cli.command import Command, Arg
+from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import ResourceNotFound
 
@@ -27,9 +27,8 @@ class Subnet(Command):
 
 class SetSubnets(Subnet):
     description = 'Set subnets to virtual-network'
-    virtual_network_fqname = Arg('--virtual-network-fqname',
-                                 required=True,
-                                 help='VN fqname (eg: default-domain:admin:net)')
+    virtual_network_fqname = Option(required=True,
+                                    help='VN fqname (eg: default-domain:admin:net)')
     cidrs = Arg(nargs="+", metavar='CIDR',
                 help='subnet CIDR',
                 type=network_type,
@@ -70,10 +69,9 @@ class SetSubnets(Subnet):
 
 class GetSubnets(Subnet):
     description = 'Get virtual-network subnets'
-    virtual_network_fqnames = Arg('--virtual-network-fqnames',
-                                  nargs='+',
-                                  required=True,
-                                  help='List of VN fqnames (eg: default-domain:admin:net)')
+    virtual_network_fqnames = Option(nargs='+',
+                                     required=True,
+                                     help='List of VN fqnames (eg: default-domain:admin:net)')
 
     def __call__(self, virtual_network_fqnames=None):
         res = []
