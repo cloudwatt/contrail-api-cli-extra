@@ -35,10 +35,10 @@ class Indexes(object):
     def create(self, index, resource, dry_run):
         value = ":".join(resource.fq_name).encode("utf-8")
         zk_index = to_zk_index(index)
+        if dry_run:
+            print "[dry_run] ",
         print "%s Create Zookeeper %s with value %s" % (resource.path, ZK_BASEPATH + "/" + zk_index, value)
         if not dry_run:
-            print "HALT"
-            exit()
             self._zk_client.create(ZK_BASEPATH + "/" + zk_index, value=value)
         self._zk_indexes.append(zk_index)
 
@@ -64,13 +64,15 @@ class FixVnId(Command):
         if vn['reason'] == "badlock":
             resource = vn["resource"]
             resource["virtual_network_network_id"] = lock
+            if dry_run:
+                print "[dry_run] ",
             print "%s Set VN ID to %s" % (resource.path, lock)
             if not dry_run:
                 resource.save()
 
     def generate(self, vn_paths):
         result = []
-        if vn_paths is None:
+        if vn_paths == []:
             vns = Collection("virtual-network", fetch=True, detail=True)
         else:
             vns = expand_paths(vn_paths)
@@ -80,7 +82,7 @@ class FixVnId(Command):
         for r in vns:
             nid = r["virtual_network_network_id"]
             try:
-                zk_data, _ = self.zk.get(ZK_BASEPATH + to_zk_index(nid))
+                zk_data, _ = self.zk.get(ZK_BASEPATH + "/" + to_zk_index(nid))
             except kazoo.exceptions.NoNodeError:
                 result.append({"reason": "nolock", "nid": nid, "path": r.path, "api-fqname": ":".join(r.fq_name), "resource": r})
                 continue
