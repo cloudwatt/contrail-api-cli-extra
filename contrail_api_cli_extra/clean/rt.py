@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from six import text_type
+
 from kazoo.client import KazooClient
-from kazoo.handlers.threading import KazooTimeoutError
+from kazoo.handlers.gevent import SequentialGeventHandler
 
 from contrail_api_cli.command import Command, Arg, Option, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map
-from contrail_api_cli.client import HTTPError
-from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.exceptions import ResourceNotFound
 
 from ..utils import server_type
 
@@ -29,53 +30,62 @@ class CleanRT(Command):
                        type=server_type,
                        default='localhost:2181')
 
-    def _get_zk_node(self, rt):
-        rt_id = int(rt['name'].split(':')[-1])
+    def log(self, message, rt):
+        printo('[%s] %s' % (rt.uuid, message))
+
+    def _get_rt_id(self, rt):
+        return int(rt['name'].split(':')[-1])
+
+    def _get_zk_node(self, rt_id):
         return '/id/bgp/route-targets/%010d' % rt_id
 
     def _ensure_lock(self, rt):
-        zk_node = self._get_zk_node(rt)
+        rt_id = self._get_rt_id(rt)
+        # No locks created for rt_id < 8000000
+        if rt_id < 8000000:
+            return
+        zk_node = '/id/bgp/route-targets/%010d' % rt_id
         if not self.zk_client.exists(zk_node):
+            if rt.get('logical_router_back_refs'):
+                fq_name = rt['logical_router_back_refs'][0].fq_name
+            else:
+                # FIXME: can't determine routing-instance for route-target
+                # don't create any lock
+                return
             if not self.dry_run:
-                self.zk_client.create(zk_node)
-            printo("Added missing ZK lock %s" % zk_node)
+                self.zk_client.create(zk_node, text_type(fq_name).encode('utf-8'))
+            self.log("Added missing ZK lock %s" % zk_node, rt)
 
     def _clean_rt(self, rt):
-        zk_node = self._get_zk_node(rt)
-        if self.zk_client.exists(zk_node):
-            if not self.dry_run:
-                self.zk_client.delete(zk_node)
-            printo("Removed ZK lock %s" % zk_node)
-
         try:
             if not self.dry_run:
                 rt.delete()
-        except HTTPError as e:
-            # Rollback if delete fails
-            if not e.http_status == 404:
-                self.zk_client.create(zk_node)
-                printo("Failed to remove RT %s: %s" (rt.path, str(e)))
-        else:
-            printo("Removed RT %s" % rt.path)
+            self.log("Removed RT %s" % rt.path, rt)
+            rt_id = self._get_rt_id(rt)
+            zk_node = self._get_zk_node(rt_id)
+            if self.zk_client.exists(zk_node):
+                if not self.dry_run:
+                    self.zk_client.delete(zk_node)
+                self.log("Removed ZK lock %s" % zk_node, rt)
+        except ResourceNotFound:
+            pass
 
     def _check_rt(self, rt, check):
         try:
             rt.fetch()
-        except HTTPError:
+        except ResourceNotFound:
             return
         if not rt.get('routing_instance_back_refs') and not rt.get('logical_router_back_refs'):
-            printo('RT %s (%s) staled' % (rt.path, rt.fq_name))
+            self.log('RT %s staled' % rt.fq_name, rt)
             if check is not True:
                 self._clean_rt(rt)
         else:
             self._ensure_lock(rt)
 
     def __call__(self, paths=None, dry_run=False, check=False, zk_server=None):
-        self.zk_client = KazooClient(hosts=zk_server, timeout=1.0)
-        try:
-            self.zk_client.start()
-        except KazooTimeoutError:
-            raise CommandError('Failed to connect to %s' % zk_server)
+        self.zk_client = KazooClient(hosts=zk_server, timeout=1.0,
+                                     handler=SequentialGeventHandler())
+        self.zk_client.start()
         self.dry_run = dry_run
         if not paths:
             resources = Collection('route-target', fetch=True)
