@@ -44,7 +44,7 @@ def short_name(path_name):
     return path_name[0:7]
 
 
-def _node_rendering(path, provided=False, resource=None):
+def _node_rendering(path, resource=None):
     renderer = rendering_map.get(path.base, default_renderer(path.base))
     if "attributes" in renderer:
         if resource is None:
@@ -54,17 +54,8 @@ def _node_rendering(path, provided=False, resource=None):
     else:
         attributes = []
     label = "%s\n%s\n%s" % (renderer["alias"], short_name(path.name), "\n".join(attributes))
-    if provided:
-        shape = "box"
-        color = "red"
-    else:
-        shape = "box"
-        color = "black"
     return {"label": label,
             "style": "filled",
-            "color": color,
-            "shape": shape,
-#            style="
             "fillcolor": renderer["color"]}
 
 
@@ -85,9 +76,9 @@ class Dot(Command):
         for r in resources:
             print "%s %s" % (short_name(r.path.name), r.path)
             r.fetch()
-            graph.add_node(r.path, _node_rendering(r.path, resource=r, provided=True))
+            graph.add_node(r.path, _node_rendering(r.path, r))
 
-            paths = [t.path for t in itertools.chain(r.refs, r.back_refs, r.children)]
+            paths = [t.path for t in itertools.chain(r.refs, r.back_refs)]
             try:
                 paths.append(r.parent.path)
             except ResourceMissing:

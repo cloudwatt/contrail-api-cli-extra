@@ -72,7 +72,6 @@ setup(
             'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
             'rpf = contrail_api_cli_extra.misc.rpf:RPF',
             'dot = contrail_api_cli_extra.misc.dot:Dot',
-            'fix-vn-id = contrail_api_cli_extra.misc.fix_vn_id:FixVnId',
         ]
     },
     classifiers=[
