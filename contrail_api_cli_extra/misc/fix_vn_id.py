@@ -59,6 +59,7 @@ class FixVnId(Command):
     description = "Fix the virtual network Zookeeper locks"
     check = Option('-c', action='store_true', help='Check if it exists bad virtual networks')
     dry_run = Option('-n', action='store_true', help='Dry run')
+    yes = Option('-y', action='store_true', help='Assume Yes to all queries and do not prompt')
     vn_paths = Arg(nargs='*',
                    metavar='vn_paths',
                    help='List of VN. If no path is provided, all VNs are considered')
@@ -107,12 +108,15 @@ class FixVnId(Command):
                 result.append({"reason": "badlock", "nid": nid, "path": r.path, "api-fqname": text_type(r.fq_name), "zk-fqname": zk_data, "resource": r})
         return result
 
-    def __call__(self, vn_paths=None, zookeeper_address=None, check=False, dry_run=False):
-        if (not dry_run
+    def __call__(self, vn_paths=None, zookeeper_address=None,
+                 check=False, dry_run=False, yes=False):
+        if (not yes and
+            not dry_run
             and not check
             and not continue_prompt("Do you really want to repair virtual networks?")):
             print "Exiting."
             exit()
+
         self.indexes = None
         self.zk = KazooClient(hosts=zookeeper_address, timeout=1.0,
                               handler=SequentialGeventHandler())
