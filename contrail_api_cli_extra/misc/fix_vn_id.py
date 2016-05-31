@@ -10,6 +10,7 @@ from contrail_api_cli.exceptions import CommandError
 
 from kazoo.client import KazooClient
 import kazoo.exceptions
+from kazoo.handlers.gevent import SequentialGeventHandler
 
 from ..utils import server_type
 
@@ -109,7 +110,8 @@ class FixVnId(Command):
             print "Exiting."
             exit()
         self.indexes = None
-        self.zk = KazooClient(hosts=zookeeper_address)
+        self.zk = KazooClient(hosts=zookeeper_address, timeout=1.0,
+                              handler=SequentialGeventHandler())
         self.zk.start()
 
         result = self.generate(vn_paths)
