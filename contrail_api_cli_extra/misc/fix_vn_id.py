@@ -67,7 +67,6 @@ class FixVnId(Command):
                                default="localhost:2181")
 
     def fix(self, vn, dry_run=True):
-        print "\nResource", vn['resource'], "\n"
         if vn['reason'] == "nolock":
             lock = vn['resource']["virtual_network_network_id"]
         if vn['reason'] == "badlock":
@@ -78,7 +77,10 @@ class FixVnId(Command):
         if vn['reason'] == "badlock":
             resource = vn["resource"]
             resource["virtual_network_network_id"] = lock
-            resource["virtual_network_properties"]["network_id"] = lock
+            try:
+                resource["virtual_network_properties"]["network_id"] = lock
+            except KeyError:
+                pass
             if dry_run:
                 print "[dry_run] ",
             print "%s Set VN ID to %s" % (resource.path, lock)
