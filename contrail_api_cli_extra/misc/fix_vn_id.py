@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from six import text_type
+
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.command import Command, Option, Arg, expand_paths
 from contrail_api_cli.utils import continue_prompt
+from contrail_api_cli.exceptions import CommandError
 
 from kazoo.client import KazooClient
 import kazoo.exceptions
+
+from ..utils import server_type
 
 ZK_BASEPATH = "/id/virtual-networks"
 
@@ -26,14 +31,20 @@ class Indexes(object):
         self._zk_indexes = self._zk_client.get_children(ZK_BASEPATH)
 
     def get_available_index(self):
+        if len(self._zk_indexes) == self.end:
+            raise CommandError("No available index")
         for i in range(self.start, self.end):
             zk_i = to_zk_index(i)
             if zk_i not in self._zk_indexes:
-                return i
-        raise Exception("No available index")
+                try:
+                    self._zk_client.get(ZK_BASEPATH + "/" + zk_i)
+                    self._zk_indexes.append(zk_i)
+                    return self.get_available_index()
+                except kazoo.exceptions.NoNodeError:
+                    return i
 
     def create(self, index, resource, dry_run):
-        value = ":".join(resource.fq_name).encode("utf-8")
+        value = text_type(resource.fq_name).encode("utf-8")
         zk_index = to_zk_index(index)
         if dry_run:
             print "[dry_run] ",
@@ -49,9 +60,10 @@ class FixVnId(Command):
     dry_run = Option('-n', action='store_true', help='Dry run')
     vn_paths = Arg(nargs='*',
                    metavar='vn_paths',
-                   help='List of VN. If no path is provided, all VNs are considered.k')
+                   help='List of VN. If no path is provided, all VNs are considered')
     zookeeper_address = Option(help="Zookeeper address. Format is host:port. Default is localhost:2181",
-                  default="localhost:2181")
+                               type=server_type,
+                               default="localhost:2181")
 
     def fix(self, vn, dry_run=True):
         if vn['reason'] == "nolock":
@@ -84,10 +96,10 @@ class FixVnId(Command):
             try:
                 zk_data, _ = self.zk.get(ZK_BASEPATH + "/" + to_zk_index(nid))
             except kazoo.exceptions.NoNodeError:
-                result.append({"reason": "nolock", "nid": nid, "path": r.path, "api-fqname": ":".join(r.fq_name), "resource": r})
+                result.append({"reason": "nolock", "nid": nid, "path": r.path, "api-fqname": text_type(r.fq_name), "resource": r})
                 continue
             if "%s" % zk_data.decode('utf-8') != "%s" % r.fq_name:
-                result.append({"reason": "badlock", "nid": nid, "path": r.path, "api-fqname": ":".join(r.fq_name), "zk-fqname": zk_data, "resource": r})
+                result.append({"reason": "badlock", "nid": nid, "path": r.path, "api-fqname": text_type(r.fq_name), "zk-fqname": zk_data, "resource": r})
         return result
 
     def __call__(self, vn_paths=None, zookeeper_address=None, check=False, dry_run=False):
@@ -108,4 +120,4 @@ class FixVnId(Command):
             if r['reason'] == "badlock":
                 print "Bad lock for %(path)s with VN Id %(nid)6s zk-fqname: %(zk-fqname)s ; api-fqname: %(api-fqname)s" % r
             if not check:
-                self.fix(r, dry_run)
+                self.fix(r, dry_run=dry_run)
