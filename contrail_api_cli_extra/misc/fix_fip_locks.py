@@ -28,7 +28,8 @@ class FixFIPLocks(Command):
                 metavar='path')
     zk_server = Option(help="Zookeeper server (default: %(default)s)",
                        type=server_type,
-                       default='localhost:2181')
+                       default='localhost:2181',
+                       required=True)
     public_fqname = Option(help="Public network fqname",
                            required=True)
 

@@ -63,9 +63,10 @@ class FixVnId(Command):
     vn_paths = Arg(nargs='*',
                    metavar='vn_paths',
                    help='List of VN. If no path is provided, all VNs are considered')
-    zookeeper_address = Option(help="Zookeeper address. Format is host:port. Default is localhost:2181",
-                               type=server_type,
-                               default="localhost:2181")
+    zk_server = Option(help="Zookeeper address. Format is host:port. Default is localhost:2181",
+                       type=server_type,
+                       default="localhost:2181",
+                       required=True)
 
     def fix(self, vn, dry_run=True):
         if vn['reason'] == "nolock":
@@ -108,7 +109,7 @@ class FixVnId(Command):
                 result.append({"reason": "badlock", "nid": nid, "path": r.path, "api-fqname": text_type(r.fq_name), "zk-fqname": zk_data, "resource": r})
         return result
 
-    def __call__(self, vn_paths=None, zookeeper_address=None,
+    def __call__(self, vn_paths=None, zk_server=None,
                  check=False, dry_run=False, yes=False):
         if (not yes and
             not dry_run
@@ -118,7 +119,7 @@ class FixVnId(Command):
             exit()
 
         self.indexes = None
-        self.zk = KazooClient(hosts=zookeeper_address, timeout=1.0,
+        self.zk = KazooClient(hosts=zk_server, timeout=1.0,
                               handler=SequentialGeventHandler())
         self.zk.start()
 

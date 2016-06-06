@@ -28,7 +28,8 @@ class CleanRT(Command):
                 metavar='path')
     zk_server = Option(help="Zookeeper server (default: %(default)s)",
                        type=server_type,
-                       default='localhost:2181')
+                       default='localhost:2181',
+                       required=True)
 
     def log(self, message, rt):
         printo('[%s] %s' % (rt.uuid, message))
