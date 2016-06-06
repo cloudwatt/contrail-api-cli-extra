@@ -5,21 +5,15 @@ import copy
 
 from keystoneclient.exceptions import Conflict
 
-from contrail_api_cli.command import Command, Arg, Option, expand_paths
+from contrail_api_cli.command import Arg, expand_paths
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import printo, FQName
 
+from ..utils import CheckCommand
 
-class MigrateSI110221(Command):
+
+class MigrateSI110221(CheckCommand):
     description = 'Migrate SIs from 1.10 to 2.21'
-    check = Option('-c',
-                   default=False,
-                   action="store_true",
-                   help='Just check for SIs to migrate')
-    dry_run = Option('-n',
-                     default=False,
-                     action="store_true",
-                     help='Run this command in dry-run mode')
     paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')
 
@@ -157,8 +151,8 @@ class MigrateSI110221(Command):
             self._delete_res(old_si)
             self._add_back_ref(new_si, si_target)
 
-    def __call__(self, paths=None, dry_run=False, check=False):
-        self.dry_run = dry_run
+    def __call__(self, paths=None, **kwargs):
+        super(MigrateSI110221, self).__call__(**kwargs)
         if not paths:
             resources = Collection('service-instance', fetch=True)
         else:
@@ -180,6 +174,6 @@ class MigrateSI110221(Command):
                 continue
 
             printo('Found lbaas SI to migrate %s (%s)' % (si.path, si.fq_name))
-            if not check:
+            if not self.check:
                 self._migrate_si(si)
                 printo('Done')

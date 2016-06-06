@@ -3,6 +3,11 @@ import argparse
 import netaddr
 import re
 
+from kazoo.client import KazooClient
+from kazoo.handlers.gevent import SequentialGeventHandler
+
+from contrail_api_cli.command import Command, Option
+
 
 def ip_type(string):
     try:
@@ -85,3 +90,30 @@ class RouteTargetAction(argparse.Action):
             raise argparse.ArgumentTypeError("With ASN as IPv4, the route target number must be contained between 1 and %d" % pow(2, 16))
 
         return 'target:%s' % value
+
+
+class ZKCommand(Command):
+    zk_server = Option(help="zookeeper server (default: %(default)s)",
+                       type=server_type,
+                       default='localhost:2181')
+
+    def __call__(self, zk_server=None, **kwargs):
+        self.zk_client = KazooClient(hosts=zk_server, timeout=1.0,
+                                     handler=SequentialGeventHandler())
+        self.zk_client.start()
+        super(ZKCommand, self).__call__(**kwargs)
+
+
+class CheckCommand(Command):
+    check = Option('-c',
+                   default=False,
+                   action="store_true")
+    dry_run = Option('-n',
+                     default=False,
+                     action="store_true",
+                     help='run this command in dry-run mode')
+
+    def __call__(self, dry_run=None, check=None, **kwargs):
+        self.dry_run = dry_run
+        self.check = check
+        super(CheckCommand, self).__call__(**kwargs)

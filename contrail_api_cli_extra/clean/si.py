@@ -1,22 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from contrail_api_cli.command import Command, Arg, Option, expand_paths
+from contrail_api_cli.command import Arg, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.client import HTTPError
 
+from ..utils import CheckCommand
 
-class CleanSIScheduling(Command):
+
+class CleanSIScheduling(CheckCommand):
     description = "Clean bad vrouter scheduling"
-    check = Option('-c',
-                   default=False,
-                   action="store_true",
-                   help='Just check for bad SI scheduling')
-    dry_run = Option('-n',
-                     default=False,
-                     action="store_true",
-                     help='Run this command in dry-run mode')
     paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')
 
@@ -26,7 +20,7 @@ class CleanSIScheduling(Command):
                 vm.remove_back_ref(vr)
             printo("Removed %s from %s" % (vr.fq_name, vm.uuid))
 
-    def _check_si(self, si, check):
+    def _check_si(self, si):
         try:
             si.fetch()
         except HTTPError:
@@ -38,29 +32,21 @@ class CleanSIScheduling(Command):
                     si.path,
                     vm.uuid,
                     ", ".join([str(vr.fq_name) for vr in vm['virtual_router_back_refs']])))
-                if check is not True:
+                if self.check is not True:
                     self._clean_vm(vm)
 
-    def __call__(self, paths=None, dry_run=False, check=False):
-        self.dry_run = dry_run
+    def __call__(self, paths=None, **kwargs):
+        super(CleanSIScheduling, self).__call__(**kwargs)
         if not paths:
             resources = Collection('service-instance', fetch=True)
         else:
             resources = expand_paths(paths,
                                      predicate=lambda r: r.type == 'service-instance')
-        parallel_map(self._check_si, resources, args=(check,), workers=50)
+        parallel_map(self._check_si, resources, workers=50)
 
 
-class CleanStaleSI(Command):
+class CleanStaleSI(CheckCommand):
     description = "Clean stale SIs"
-    check = Option('-c',
-                   default=False,
-                   action="store_true",
-                   help='Just check for stale SIs')
-    dry_run = Option('-n',
-                     default=False,
-                     action="store_true",
-                     help='Run this command in dry-run mode')
     paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')
 
@@ -149,7 +135,7 @@ class CleanStaleSI(Command):
             self._delete_res(si, vm)
         self._delete_res(si, si)
 
-    def _check_si(self, si, check=False):
+    def _check_si(self, si):
         si.fetch()
         try:
             si_t = si['service_template_refs'][0]
@@ -159,20 +145,20 @@ class CleanStaleSI(Command):
 
         if 'haproxy-loadbalancer-template' in si_t.fq_name and self._is_stale_lbaas(si):
             printo('[%s] Found stale lbaas %s' % (si.uuid, str(si.fq_name)))
-            if check is not True:
+            if self.check is not True:
                 self._clean_lbaas_si(si)
                 self._clean_si(si)
 
         if 'netns-snat-template' in si_t.fq_name and self._is_stale_snat(si):
             printo('[%s] Found stale SNAT %s' % (si.uuid, str(si.fq_name)))
-            if check is not True:
+            if self.check is not True:
                 self._clean_si(si)
 
-    def __call__(self, paths=None, dry_run=False, check=False):
-        self.dry_run = dry_run
+    def __call__(self, paths=None, **kwargs):
+        super(CleanStaleSI, self).__call__(**kwargs)
         if not paths:
             resources = Collection('service-instance', fetch=True)
         else:
             resources = expand_paths(paths,
                                      predicate=lambda r: r.type == 'service-instance')
-        parallel_map(self._check_si, resources, kwargs={'check': check}, workers=50)
+        parallel_map(self._check_si, resources, workers=50)

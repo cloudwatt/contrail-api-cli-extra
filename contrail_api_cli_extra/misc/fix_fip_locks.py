@@ -3,33 +3,18 @@ from __future__ import unicode_literals
 
 from netaddr import IPNetwork, IPAddress
 
-from kazoo.client import KazooClient
-from kazoo.handlers.gevent import SequentialGeventHandler
-
-from contrail_api_cli.command import Command, Arg, Option, expand_paths
+from contrail_api_cli.command import Arg, Option, expand_paths
 from contrail_api_cli.resource import Collection, Resource
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.exceptions import ResourceNotFound
 
-from ..utils import server_type
+from ..utils import ZKCommand, CheckCommand
 
 
-class FixFIPLocks(Command):
+class FixFIPLocks(ZKCommand, CheckCommand):
     description = "Add missing locks for FIPs"
-    check = Option('-c',
-                   default=False,
-                   action="store_true",
-                   help='Just check locks')
-    dry_run = Option('-n',
-                     default=False,
-                     action="store_true",
-                     help='Run this command in dry-run mode')
     paths = Arg(nargs="*", help="FIP path(s)",
                 metavar='path')
-    zk_server = Option(help="Zookeeper server (default: %(default)s)",
-                       type=server_type,
-                       default='localhost:2181',
-                       required=True)
     public_fqname = Option(help="Public network fqname",
                            required=True)
 
@@ -60,12 +45,8 @@ class FixFIPLocks(Command):
             if self.check is not True or self.dry_run is not True:
                 self.zk_client.create(zk_node)
 
-    def __call__(self, paths=None, dry_run=False, check=False, zk_server=None, public_fqname=None):
-        self.zk_client = KazooClient(hosts=zk_server, timeout=1.0,
-                                     handler=SequentialGeventHandler())
-        self.zk_client.start()
-        self.dry_run = dry_run
-        self.check = check
+    def __call__(self, paths=None, public_fqname=None, **kwargs):
+        super(FixFIPLocks, self).__call__(**kwargs)
         self.public_fqname = public_fqname
         if not paths:
             resources = Collection('floating-ip', fetch=True)
@@ -79,4 +60,3 @@ class FixFIPLocks(Command):
             subnets.append(IPNetwork('%s/%s' % (s['subnet']['ip_prefix'], s['subnet']['ip_prefix_len'])))
 
         parallel_map(self._check_fip, resources, args=(subnets,), workers=50)
-        self.zk_client.stop()

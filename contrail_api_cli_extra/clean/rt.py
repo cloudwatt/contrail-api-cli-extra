@@ -3,33 +3,16 @@ from __future__ import unicode_literals
 
 from six import text_type
 
-from kazoo.client import KazooClient
-from kazoo.handlers.gevent import SequentialGeventHandler
-
-from contrail_api_cli.command import Command, Arg, Option, expand_paths
+from contrail_api_cli.command import Arg, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.exceptions import ResourceNotFound
 
-from ..utils import server_type
+from ..utils import CheckCommand, ZKCommand
 
 
-class CleanRT(Command):
+class CleanRT(CheckCommand, ZKCommand):
     description = "Clean stale route targets"
-    check = Option('-c',
-                   default=False,
-                   action="store_true",
-                   help='Just check RTs')
-    dry_run = Option('-n',
-                     default=False,
-                     action="store_true",
-                     help='Run this command in dry-run mode')
-    paths = Arg(nargs="*", help="RT path(s)",
-                metavar='path')
-    zk_server = Option(help="Zookeeper server (default: %(default)s)",
-                       type=server_type,
-                       default='localhost:2181',
-                       required=True)
 
     def log(self, message, rt):
         printo('[%s] %s' % (rt.uuid, message))
@@ -71,27 +54,23 @@ class CleanRT(Command):
         except ResourceNotFound:
             pass
 
-    def _check_rt(self, rt, check):
+    def _check_rt(self, rt):
         try:
             rt.fetch()
         except ResourceNotFound:
             return
         if not rt.get('routing_instance_back_refs') and not rt.get('logical_router_back_refs'):
             self.log('RT %s staled' % rt.fq_name, rt)
-            if check is not True:
+            if self.check is not True:
                 self._clean_rt(rt)
         else:
             self._ensure_lock(rt)
 
-    def __call__(self, paths=None, dry_run=False, check=False, zk_server=None):
-        self.zk_client = KazooClient(hosts=zk_server, timeout=1.0,
-                                     handler=SequentialGeventHandler())
-        self.zk_client.start()
-        self.dry_run = dry_run
+    def __call__(self, paths=None, **kwargs):
+        super(CleanRT, self).__call__(**kwargs)
         if not paths:
             resources = Collection('route-target', fetch=True)
         else:
             resources = expand_paths(paths,
                                      predicate=lambda r: r.type == 'route-target')
-        parallel_map(self._check_rt, resources, args=(check,), workers=50)
-        self.zk_client.stop()
+        parallel_map(self._check_rt, resources, workers=50)
