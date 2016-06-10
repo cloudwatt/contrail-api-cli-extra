@@ -74,6 +74,10 @@ setup(
             'dot = contrail_api_cli_extra.misc.dot:Dot',
             'fix-vn-id = contrail_api_cli_extra.misc.fix_vn_id:FixVnId',
             'fix-fip-locks = contrail_api_cli_extra.misc.fix_fip_locks:FixFIPLocks',
+            'find-orphaned-projects = contrail_api_cli_extra.clean.project:FindOrphanedProjects',
+        ],
+        'contrail_api_cli.clean': [
+            'purge-project = contrail_api_cli_extra.clean.project:PurgeProject',
         ]
     },
     classifiers=[
