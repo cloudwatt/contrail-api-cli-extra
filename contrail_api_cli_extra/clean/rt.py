@@ -13,6 +13,8 @@ from ..utils import CheckCommand, ZKCommand
 
 class CleanRT(CheckCommand, ZKCommand):
     description = "Clean stale route targets"
+    paths = Arg(nargs="*", help="RT path(s)",
+                metavar='path')
 
     def log(self, message, rt):
         printo('[%s] %s' % (rt.uuid, message))
