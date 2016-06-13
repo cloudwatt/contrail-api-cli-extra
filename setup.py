@@ -73,6 +73,7 @@ setup(
             'rpf = contrail_api_cli_extra.misc.rpf:RPF',
             'dot = contrail_api_cli_extra.misc.dot:Dot',
             'fix-vn-id = contrail_api_cli_extra.misc.fix_vn_id:FixVnId',
+            'fix-sg = contrail_api_cli_extra.misc.fix_sg:FixSg',
             'fix-fip-locks = contrail_api_cli_extra.misc.fix_fip_locks:FixFIPLocks',
             'find-orphaned-projects = contrail_api_cli_extra.clean.project:FindOrphanedProjects',
         ],
