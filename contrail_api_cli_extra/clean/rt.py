@@ -3,18 +3,18 @@ from __future__ import unicode_literals
 
 from six import text_type
 
-from contrail_api_cli.command import Arg, expand_paths
-from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.exceptions import ResourceNotFound
 
-from ..utils import CheckCommand, ZKCommand
+from ..utils import CheckCommand, ZKCommand, PathCommand
 
 
-class CleanRT(CheckCommand, ZKCommand):
+class CleanRT(CheckCommand, ZKCommand, PathCommand):
     description = "Clean stale route targets"
-    paths = Arg(nargs="*", help="RT path(s)",
-                metavar='path')
+
+    @property
+    def resource_type(self):
+        return "route-target"
 
     def log(self, message, rt):
         printo('[%s] %s' % (rt.uuid, message))
@@ -68,11 +68,6 @@ class CleanRT(CheckCommand, ZKCommand):
         else:
             self._ensure_lock(rt)
 
-    def __call__(self, paths=None, **kwargs):
+    def __call__(self, **kwargs):
         super(CleanRT, self).__call__(**kwargs)
-        if not paths:
-            resources = Collection('route-target', fetch=True)
-        else:
-            resources = expand_paths(paths,
-                                     predicate=lambda r: r.type == 'route-target')
-        parallel_map(self._check_rt, resources, workers=50)
+        parallel_map(self._check_rt, self.resources, workers=50)

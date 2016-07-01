@@ -3,21 +3,23 @@ from __future__ import unicode_literals
 
 from netaddr import IPNetwork, IPAddress
 
-from contrail_api_cli.command import Arg, Option, expand_paths
-from contrail_api_cli.resource import Collection, Resource
+from contrail_api_cli.command import Option
+from contrail_api_cli.resource import Resource
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.exceptions import ResourceNotFound
 
-from ..utils import ZKCommand, CheckCommand
+from ..utils import ZKCommand, CheckCommand, PathCommand
 
 
-class FixFIPLocks(ZKCommand, CheckCommand):
+class FixFIPLocks(ZKCommand, CheckCommand, PathCommand):
     description = "Add missing locks for FIPs"
-    paths = Arg(nargs="*", help="FIP path(s)",
-                metavar='path')
     public_fqname = Option(help="Public network fqname",
                            required=True,
                            complete="resources:virtual-network:fq_name")
+
+    @property
+    def resource_type(self):
+        return "floating-ip"
 
     def log(self, message, fip):
         printo('[%s] %s' % (fip.uuid, message))
@@ -46,18 +48,13 @@ class FixFIPLocks(ZKCommand, CheckCommand):
             if self.check is not True or self.dry_run is not True:
                 self.zk_client.create(zk_node)
 
-    def __call__(self, paths=None, public_fqname=None, **kwargs):
+    def __call__(self, public_fqname=None, **kwargs):
         super(FixFIPLocks, self).__call__(**kwargs)
         self.public_fqname = public_fqname
-        if not paths:
-            resources = Collection('floating-ip', fetch=True)
-        else:
-            resources = expand_paths(paths,
-                                     predicate=lambda r: r.type == 'floating-ip')
 
         public_vn = Resource('virtual-network', fq_name=public_fqname, fetch=True)
         subnets = []
         for s in public_vn['network_ipam_refs'][0]['attr']['ipam_subnets']:
             subnets.append(IPNetwork('%s/%s' % (s['subnet']['ip_prefix'], s['subnet']['ip_prefix_len'])))
 
-        parallel_map(self._check_fip, resources, args=(subnets,), workers=50)
+        parallel_map(self._check_fip, self.resources, args=(subnets,), workers=50)

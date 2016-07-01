@@ -2,12 +2,16 @@ from six import text_type
 import argparse
 import netaddr
 import re
+import abc
+from six import add_metaclass
 
 from kazoo.client import KazooClient
 from kazoo.handlers.gevent import SequentialGeventHandler
 
-from contrail_api_cli.command import Command, Option
-from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.command import Command, Arg, Option, expand_paths
+from contrail_api_cli.exceptions import CommandError, ResourceNotFound
+from contrail_api_cli.resource import Collection
+from contrail_api_cli.utils import parallel_map
 
 
 def ip_type(string):
@@ -123,3 +127,31 @@ class CheckCommand(Command):
         self.dry_run = dry_run
         self.check = check
         super(CheckCommand, self).__call__(**kwargs)
+
+
+@add_metaclass(abc.ABCMeta)
+class PathCommand(Command):
+
+    @abc.abstractproperty
+    def resource_type(self):
+        """Type of resource the command
+        is about.
+        """
+        return "resource_type"
+
+    def __new__(cls, *args):
+        cmd = super(PathCommand, cls).__new__(cls, *args)
+        cls.paths = Arg(nargs="*",
+                        help="{type} path(s). "
+                             "When no path is provided "
+                             "all {type}s are considered.".format(type=cmd.resource_type),
+                        metavar='path',
+                        complete="resources:%s:path" % cmd.resource_type)
+        return cmd
+
+    def __call__(self, paths=None):
+        if not paths:
+            self.resources = Collection(self.resource_type, fetch=True)
+        else:
+            self.resources = expand_paths(paths,
+                                          predicate=lambda r: r.type == self.resource_type)

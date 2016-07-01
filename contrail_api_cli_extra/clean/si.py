@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from contrail_api_cli.command import Arg, expand_paths
-from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map
-from contrail_api_cli.client import HTTPError
+from contrail_api_cli.exceptions import ResourceNotFound
 
-from ..utils import CheckCommand
+from ..utils import CheckCommand, PathCommand
 
 
-class CleanSIScheduling(CheckCommand):
+class CleanSIScheduling(CheckCommand, PathCommand):
     description = "Clean bad vrouter scheduling"
-    paths = Arg(nargs="*", help="SI path(s)",
-                metavar='path')
+
+    @property
+    def resource_type(self):
+        return "service-instance"
 
     def _clean_vm(self, vm):
         for vr in vm.get('virtual_router_back_refs')[1:]:
@@ -23,7 +23,7 @@ class CleanSIScheduling(CheckCommand):
     def _check_si(self, si):
         try:
             si.fetch()
-        except HTTPError:
+        except ResourceNotFound:
             return
         for vm in si.get('virtual_machine_back_refs', []):
             vm.fetch()
@@ -37,18 +37,15 @@ class CleanSIScheduling(CheckCommand):
 
     def __call__(self, paths=None, **kwargs):
         super(CleanSIScheduling, self).__call__(**kwargs)
-        if not paths:
-            resources = Collection('service-instance', fetch=True)
-        else:
-            resources = expand_paths(paths,
-                                     predicate=lambda r: r.type == 'service-instance')
-        parallel_map(self._check_si, resources, workers=50)
+        parallel_map(self._check_si, self.resources, workers=50)
 
 
-class CleanStaleSI(CheckCommand):
+class CleanStaleSI(CheckCommand, PathCommand):
     description = "Clean stale SIs"
-    paths = Arg(nargs="*", help="SI path(s)",
-                metavar='path')
+
+    @property
+    def resource_type(self):
+        return "service-instance"
 
     def _is_stale_snat(self, si):
         """Return True if the snat SI is stale.
@@ -156,9 +153,4 @@ class CleanStaleSI(CheckCommand):
 
     def __call__(self, paths=None, **kwargs):
         super(CleanStaleSI, self).__call__(**kwargs)
-        if not paths:
-            resources = Collection('service-instance', fetch=True)
-        else:
-            resources = expand_paths(paths,
-                                     predicate=lambda r: r.type == 'service-instance')
-        parallel_map(self._check_si, resources, workers=50)
+        parallel_map(self._check_si, self.resources, workers=50)

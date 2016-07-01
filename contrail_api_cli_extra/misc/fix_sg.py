@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from contrail_api_cli.resource import Collection
-
-from contrail_api_cli.command import Option, Arg, expand_paths
+from contrail_api_cli.command import Option
 from contrail_api_cli.utils import continue_prompt
 from contrail_api_cli.exceptions import CommandError
 from contrail_api_cli.utils import FQName
 
-from ..utils import CheckCommand
+from ..utils import CheckCommand, PathCommand
 
 
-class FixSg(CheckCommand):
+class FixSg(CheckCommand, PathCommand):
     description = "Fix default security group that shouldn't belong to a project"
     yes = Option('-y', action='store_true', help='Assume Yes to all queries and do not prompt')
-    paths = Arg(nargs="*", help="Project path(s)",
-                metavar='path', complete="ressources:project:path")
     long_description = """ It appears sometimes several default security groups have been
     created. Normally, only one default security group should be
     created. When there are several security groups, some of them
@@ -32,6 +28,10 @@ class FixSg(CheckCommand):
     delete non used bad default security groups. "Non used" means no
     VMIs are attached to them.
     """
+
+    @property
+    def resource_type(self):
+        return "project"
 
     def _handle_sg(self, status, sg, delete=True):
         print "    %s  SG: %s %s" % (status, sg.uuid, sg.fq_name)
@@ -56,14 +56,8 @@ class FixSg(CheckCommand):
                 not continue_prompt("Some SGs will be deleted. Are you sure to continue?")):
             raise CommandError("Exiting.")
 
-        if not paths:
-            resources = Collection('project', fetch=True)
-        else:
-            resources = expand_paths(paths,
-                                     predicate=lambda r: r.type == 'project')
-
         bad_sg_exists = False
-        for r in resources:
+        for r in self.resources:
             r.fetch()
             fq_name = r.fq_name
             if r.children.security_group:
