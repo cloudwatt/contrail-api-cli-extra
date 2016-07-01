@@ -6,6 +6,7 @@ from contrail_api_cli.resource import Resource
 
 from contrail_api_cli.command import Option
 from contrail_api_cli.utils import continue_prompt
+from contrail_api_cli.exceptions import CommandError
 
 from ..utils import CheckCommand
 
@@ -45,15 +46,13 @@ class FixSg(CheckCommand):
                 else:
                     print "            [dry-run] Deleting SG %s ..." % sg.uuid
 
-
     def __call__(self, yes=False, **kwargs):
         super(FixSg, self).__call__(**kwargs)
         if (not yes and
                 not self.dry_run and
                 not self.check and
                 not continue_prompt("Some SGs will be deleted. Are you sure to continue?")):
-            print "Exiting."
-            exit()
+            raise CommandError("Exiting.")
 
         bad_sg_exists = False
         col = Collection("project")
@@ -79,4 +78,4 @@ class FixSg(CheckCommand):
                         self._handle_sg("Good", sg, delete=False)
 
         if self.check and bad_sg_exists:
-            exit(1)
+            raise CommandError()
