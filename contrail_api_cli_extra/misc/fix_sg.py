@@ -30,7 +30,7 @@ class FixSg(CheckCommand):
     VMIs are attached to them.
     """
 
-    def _handle_sg(self, status, sg_dict):
+    def _handle_sg(self, status, sg_dict, delete=True):
         print "    %s  SG: %s %s" % (status, sg_dict['uuid'], ":".join(sg_dict['to']))
         if not self.check:
             used = False
@@ -38,7 +38,7 @@ class FixSg(CheckCommand):
             for br in sg.back_refs:
                 used = True
                 print "        Used by VMI %s" % br.uuid
-            if not used:
+            if not used and delete:
                 if not self.dry_run:
                     print "            Deleting SG %s ..." % sg.uuid
                     sg.delete()
@@ -76,7 +76,7 @@ class FixSg(CheckCommand):
                     for sg in bad_sg:
                         self._handle_sg("Bad ", sg)
                     for sg in good_sg:
-                        self._handle_sg("Good", sg)
+                        self._handle_sg("Good", sg, delete=False)
 
         if self.check and bad_sg_exists:
             exit(1)
