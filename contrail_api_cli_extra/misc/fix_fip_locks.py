@@ -16,7 +16,8 @@ class FixFIPLocks(ZKCommand, CheckCommand):
     paths = Arg(nargs="*", help="FIP path(s)",
                 metavar='path')
     public_fqname = Option(help="Public network fqname",
-                           required=True)
+                           required=True,
+                           complete="resources:virtual-network:fq_name")
 
     def log(self, message, fip):
         printo('[%s] %s' % (fip.uuid, message))
