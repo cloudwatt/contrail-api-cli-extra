@@ -7,6 +7,7 @@ from kazoo.client import KazooClient
 from kazoo.handlers.gevent import SequentialGeventHandler
 
 from contrail_api_cli.command import Command, Option
+from contrail_api_cli.exceptions import CommandError
 
 
 def ip_type(string):
@@ -98,9 +99,14 @@ class ZKCommand(Command):
                        default='localhost:2181')
 
     def __call__(self, zk_server=None, **kwargs):
+        handler = SequentialGeventHandler()
         self.zk_client = KazooClient(hosts=zk_server, timeout=1.0,
-                                     handler=SequentialGeventHandler())
-        self.zk_client.start()
+                                     handler=handler)
+        try:
+            self.zk_client.start()
+        except handler.timeout_exception:
+            raise CommandError("Can't connect to Zookeeper at %s" % zk_server)
+
         super(ZKCommand, self).__call__(**kwargs)
 
 
