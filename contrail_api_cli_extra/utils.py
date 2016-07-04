@@ -9,9 +9,8 @@ from kazoo.client import KazooClient
 from kazoo.handlers.gevent import SequentialGeventHandler
 
 from contrail_api_cli.command import Command, Arg, Option, expand_paths
-from contrail_api_cli.exceptions import CommandError, ResourceNotFound
+from contrail_api_cli.exceptions import CommandError
 from contrail_api_cli.resource import Collection
-from contrail_api_cli.utils import parallel_map
 
 
 def ip_type(string):
