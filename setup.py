@@ -75,6 +75,7 @@ setup(
             'fix-sg = contrail_api_cli_extra.fix.fix_sg:FixSg',
             'fix-fip-locks = contrail_api_cli_extra.fix.fix_fip_locks:FixFIPLocks',
             'fix-subnets = contrail_api_cli_extra.fix.fix_subnets:FixSubnets',
+            'fix-zk-ip = contrail_api_cli_extra.misc.fix_zk_ip:FixZkIP',
         ],
         'contrail_api_cli.migration': [
             'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
