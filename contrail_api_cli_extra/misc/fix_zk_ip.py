@@ -211,6 +211,64 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                              .format(str(IPAddress(ip)), str(zk_path)))
         return
 
+    def fix(self, api_ips, zk_ips):
+        ips = {}
+        ips_index = set(api_ips.keys()) | set(zk_ips.keys())
+
+        for ip in ips_index:
+            zk_ok = False
+            api_ok = False
+            ips[ip] = {}
+            try:
+                ips[ip].update({'zk_path': zk_ips[ip]})
+                logger.info(str(ip) + ' : ZOOKEEPER K')
+                zk_ok = True
+            except:
+                logger.info(str(ip) + ' : NOT FOUND IN ZOOKEEPER')
+                self.stats['miss_lock'] += 1
+                if not self.check:
+                    self.add_znode_ip(ip,
+                                      api_ips[ip],
+                                      dry_run=self.dry_run)
+            try:
+                ips[ip].update({'resource': api_ips[ip]})
+                logger.info(str(ip) + ' : API OK')
+                api_ok = True
+            except:
+                logger.info(str(ip) + ' : NOT FOUND IN API')
+                self.stats['abusive_lock'] += 1
+                if not self.check:
+                    self.del_znode_ip(ip, zk_ips[ip], dry_run=self.dry_run)
+
+            if zk_ok and api_ok:
+                self.stats['healthy_lock'] += 1
+
+    def print_stats(self, resource):
+        if (self.stats['miss_lock'] == 0 and
+           self.stats['abusive_lock'] == 0):
+            status = 'OK'
+        else:
+            status = 'KO'
+        print('{0} : {1}'.format(str(resource.fq_name), status))
+        if status == 'KO':
+            print('Healthy locks : {0} '
+                  .format(str(self.stats['healthy_lock'])))
+            print('Missing locks : {0} '
+                  .format(str(self.stats['miss_lock'])))
+            if not self. dry_run:
+                print('Fixed missing locks : {0}'
+                      .format(str(self.stats['miss_lock_fixed'])))
+                print('Failed missing locks fix: {0}'
+                      .format(str(self.stats['miss_lock_fix_failed'])))
+            print('Abusive locks : {0} '
+                  .format(str(self.stats['abusive_lock'])))
+            if not self.dry_run:
+                print('Fixed abusive locks : {0} '
+                      .format(str(self.stats['abusive_lock_fixed'])))
+                print('Failed abusive locks fix: {0} '
+                      .format(str(self.stats['abusive_lock_fix_failed'])))
+        print()
+
     def __call__(self, yes=False, **kwargs):
         super(FixZkIP, self).__call__(**kwargs)
         for r in self.resources:
@@ -221,8 +279,6 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                           'abusive_lock_fixed': 0,
                           'abusive_lock_fix_failed': 0,
                           'healthy_lock': 0}
-            r.fetch()
-            ips = {}
             if (not yes and
                     not self.dry_run and
                     not self.check and
@@ -230,6 +286,7 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                                         str(r.fq_name) + " network?")):
                 raise CommandError("Exiting.")
 
+            r.fetch()
             if 'network_ipam_refs' in r:
                 zk_ips = self.get_zk_ip(r)
                 api_ips = self.get_api_ip(r)
@@ -237,58 +294,5 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                 logger.info('No subnet found for network {0} '
                             .format(str(r.fq_name)))
                 continue
-
-            ips_index = set(api_ips.keys()) | set(zk_ips.keys())
-
-            for ip in ips_index:
-                zk_ok = False
-                api_ok = False
-                ips[ip] = {}
-                try:
-                    ips[ip].update({'zk_path': zk_ips[ip]})
-                    logger.info(str(ip) + ' : ZOOKEEPER OK')
-                    zk_ok = True
-                except:
-                    logger.info(str(ip) + ' : NOT FOUND IN ZOOKEEPER')
-                    self.stats['miss_lock'] += 1
-                    if not self.check:
-                        self.add_znode_ip(ip,
-                                          api_ips[ip],
-                                          dry_run=self.dry_run)
-                try:
-                    ips[ip].update({'resource': api_ips[ip]})
-                    logger.info(str(ip) + ' : API OK')
-                    api_ok = True
-                except:
-                    logger.info(str(ip) + ' : NOT FOUND IN API')
-                    self.stats['abusive_lock'] += 1
-                    if not self.check:
-                        self.del_znode_ip(ip, zk_ips[ip], dry_run=self.dry_run)
-
-                if zk_ok and api_ok:
-                    self.stats['healthy_lock'] += 1
-
-            if (self.stats['miss_lock'] == 0 and
-               self.stats['abusive_lock'] == 0):
-                status = 'OK'
-            else:
-                status = 'KO'
-            print('{0} : {1}'.format(str(r.fq_name), status))
-            if status == 'KO':
-                print('Healthy locks : {0} '
-                      .format(str(self.stats['healthy_lock'])))
-                print('Missing locks : {0} '
-                      .format(str(self.stats['miss_lock'])))
-                if not self. dry_run:
-                    print('Fixed missing locks : {0}'
-                          .format(str(self.stats['miss_lock_fixed'])))
-                    print('Failed missing locks fix: {0}'
-                          .format(str(self.stats['miss_lock_fix_failed'])))
-                print('Abusive locks : {0} '
-                      .format(str(self.stats['abusive_lock'])))
-                if not self.dry_run:
-                    print('Fixed abusive locks : {0} '
-                          .format(str(self.stats['abusive_lock_fixed'])))
-                    print('Failed abusive locks fix: {0} '
-                          .format(str(self.stats['abusive_lock_fix_failed'])))
-            print()
+            self.fix(api_ips, zk_ips)
+            self.print_stats(r)
