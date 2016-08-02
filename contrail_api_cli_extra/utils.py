@@ -148,9 +148,10 @@ class PathCommand(Command):
                         complete="resources:%s:path" % cmd.resource_type)
         return cmd
 
-    def __call__(self, paths=None):
+    def __call__(self, paths=None, **kwargs):
         if not paths:
             self.resources = Collection(self.resource_type, fetch=True)
         else:
             self.resources = expand_paths(paths,
                                           predicate=lambda r: r.type == self.resource_type)
+        super(PathCommand, self).__call__(**kwargs)
