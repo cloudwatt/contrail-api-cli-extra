@@ -76,6 +76,7 @@ setup(
             'fix-sg = contrail_api_cli_extra.misc.fix_sg:FixSg',
             'fix-fip-locks = contrail_api_cli_extra.misc.fix_fip_locks:FixFIPLocks',
             'find-orphaned-projects = contrail_api_cli_extra.clean.project:FindOrphanedProjects',
+            'reschedule-vm = contrail_api_cli_extra.misc.vm:RescheduleVM',
         ],
         'contrail_api_cli.clean': [
             'purge-project = contrail_api_cli_extra.clean.project:PurgeProject',
