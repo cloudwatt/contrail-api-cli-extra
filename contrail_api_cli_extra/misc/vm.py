@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class RescheduleVM(CheckCommand):
+    description = "Move SI VMs from one virtual-router to other virtual-router(s)"
     src = Arg(help='source vrouter path',
               complete='resources:virtual-router:path')
     dst = Arg(help='destination vrouters paths', nargs='+',
