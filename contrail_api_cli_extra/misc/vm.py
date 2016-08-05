@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 
 class RescheduleVM(CheckCommand):
     src = Arg(help='source vrouter path',
-              complete='resources:virtual-router:path',
-              order=1)
+              complete='resources:virtual-router:path')
     dst = Arg(help='destination vrouters paths', nargs='+',
               complete='resources:virtual-router:path')
 
