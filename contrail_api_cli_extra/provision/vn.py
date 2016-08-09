@@ -28,7 +28,8 @@ class AddVN(VNAction):
     def __call__(self, project_fqname=None, virtual_network_name=None, external=False, shared=False):
         vn_fqname = '%s:%s' % (project_fqname, virtual_network_name)
 
-        project = Resource('project', fq_name=project_fqname)
+        # fetch project to sync it from keystone if not already there
+        project = Resource('project', fq_name=project_fqname, fetch=True)
         vn = Resource('virtual-network',
                       fq_name=vn_fqname,
                       parent=project,
