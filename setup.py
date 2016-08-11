@@ -69,7 +69,6 @@ setup(
             'clean-stale-si = contrail_api_cli_extra.clean.si:CleanStaleSI',
             'clean-route-target = contrail_api_cli_extra.clean.rt:CleanRT',
             'clean-si-scheduling = contrail_api_cli_extra.clean.si:CleanSIScheduling',
-            'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
             'rpf = contrail_api_cli_extra.misc.rpf:RPF',
             'dot = contrail_api_cli_extra.misc.dot:Dot',
             'fix-vn-id = contrail_api_cli_extra.misc.fix_vn_id:FixVnId',
@@ -77,6 +76,10 @@ setup(
             'fix-fip-locks = contrail_api_cli_extra.misc.fix_fip_locks:FixFIPLocks',
             'find-orphaned-projects = contrail_api_cli_extra.clean.project:FindOrphanedProjects',
             'reschedule-vm = contrail_api_cli_extra.misc.vm:RescheduleVM',
+        ],
+        'contrail_api_cli.migration': [
+            'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
+            'migrate-host-routes = contrail_api_cli_extra.migration.host_routes:MigrateHostRoutes',
         ],
         'contrail_api_cli.clean': [
             'purge-project = contrail_api_cli_extra.clean.project:PurgeProject',
