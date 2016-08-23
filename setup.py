@@ -65,10 +65,6 @@ setup(
         ],
         'contrail_api_cli.command': [
             'provision = contrail_api_cli_extra.provision.provision:Provision',
-            'clean-orphaned-acl = contrail_api_cli_extra.clean.orphaned_acl:OrphanedACL',
-            'clean-stale-si = contrail_api_cli_extra.clean.si:CleanStaleSI',
-            'clean-route-target = contrail_api_cli_extra.clean.rt:CleanRT',
-            'clean-si-scheduling = contrail_api_cli_extra.clean.si:CleanSIScheduling',
             'rpf = contrail_api_cli_extra.misc.rpf:RPF',
             'dot = contrail_api_cli_extra.misc.dot:Dot',
             'fix-vn-id = contrail_api_cli_extra.misc.fix_vn_id:FixVnId',
@@ -83,6 +79,10 @@ setup(
         ],
         'contrail_api_cli.clean': [
             'purge-project = contrail_api_cli_extra.clean.project:PurgeProject',
+            'clean-orphaned-acl = contrail_api_cli_extra.clean.orphaned_acl:OrphanedACL',
+            'clean-stale-si = contrail_api_cli_extra.clean.si:CleanStaleSI',
+            'clean-route-target = contrail_api_cli_extra.clean.rt:CleanRT',
+            'clean-si-scheduling = contrail_api_cli_extra.clean.si:CleanSIScheduling',
         ]
     },
     classifiers=[
