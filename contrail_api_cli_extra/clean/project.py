@@ -37,7 +37,8 @@ class FindOrphanedProjects(Command):
 
 class PurgeProject(Command):
     description = "Purge contrail projects"
-    paths = Arg(nargs="+", help="path(s)", metavar='path')
+    paths = Arg(nargs="+", help="path(s)", metavar='path',
+                complete="resources:project:path")
 
     def _handle_si_vm(self, iip, vmi):
         # to cleanup SI we need to remove manually the VMs
