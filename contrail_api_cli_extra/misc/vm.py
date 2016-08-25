@@ -15,6 +15,21 @@ logger = logging.getLogger(__name__)
 
 
 class RescheduleVM(CheckCommand):
+    """Command to move a SI VMs from one virtual-router to other virtual-routers.
+
+    This command will move all SI VMs found on the provided VR to a
+    list of VRs. The command will make sure two VMs of the same SI
+    will not end up on the same VR.
+
+    The command can be run in dry-run mode to see how the VMs will be moved.
+
+    To reschedule VMs run::
+
+        contrail-api-cli reschedule-vm virtual-router/uuid1 virtual-router/uuid2 virtual-router/uuid3
+
+    This will move all VR/uuid1 SI VMs to VR/uuid2 and VR/uuid3 evenly.
+    """
+
     description = "Move SI VMs from one virtual-router to other virtual-router(s)"
     src = Arg(help='source vrouter path',
               complete='resources:virtual-router:path')

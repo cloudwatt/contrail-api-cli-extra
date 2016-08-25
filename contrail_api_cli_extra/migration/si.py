@@ -13,6 +13,8 @@ from ..utils import CheckCommand
 
 
 class MigrateSI110221(CheckCommand):
+    """Migration command for SI from 1.10 version to 2.21 version
+    """
     description = 'Migrate SIs from 1.10 to 2.21'
     paths = Arg(nargs="*", help="SI path(s)",
                 metavar='path')

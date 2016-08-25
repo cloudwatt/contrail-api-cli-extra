@@ -12,6 +12,11 @@ NEUTRON_RT_PREFIX = "NEUTRON_RT_"
 
 
 class MigrateHostRoutes(CheckCommand, PathCommand):
+    """Command to migrate host-route implementation based on
+    interface-route-tables to route-tables (V3 plugin)::
+
+        contrail-api-cli --ns contrail_api_cli.migration migrate-host-routes [interface-route-table/uuid]
+    """
     description = "Migrate host-routes to new V3 implementation"
 
     @property

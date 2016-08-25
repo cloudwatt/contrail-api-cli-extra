@@ -2,6 +2,15 @@ from contrail_api_cli.command import Command, Arg, Option, expand_paths
 
 
 class RPF(Command):
+    """Simple command to enable or disable RPF (Reverse Path Forwarding) on
+    a VN.
+
+    To check if RPF is enabled or not run::
+
+        contrail-api-cli rpf virtual-network/uuid
+
+    To enable of disable RPF add ``--on`` or ``--off`` options.
+    """
     description = 'enable/disable RPF on network'
     on = Option(action='store_true',
                 help='Enable RPF')

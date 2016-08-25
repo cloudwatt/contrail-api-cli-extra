@@ -10,15 +10,13 @@ from ..utils import CheckCommand, PathCommand
 
 
 class FixSg(CheckCommand, PathCommand):
-    description = "Fix default security group that shouldn't belong to a project"
-    yes = Option('-y', action='store_true', help='Assume Yes to all queries and do not prompt')
-    long_description = """ It appears sometimes several default security groups have been
+    """ It appears sometimes several default security groups have been
     created. Normally, only one default security group should be
     created. When there are several security groups, some of them
     doesn't have the right project name in their fq_name. These
-    secrutiy group are not legitimate.
+    security groups are not legitimate.
 
-    The check mode of this script detects these security groups and
+    The check mode of this script detects theses security groups and
     marks default security groups of a tenant as good or bad. Good
     default security group is legitimate while bad are not. Moreover,
     if it exists bad security groups, the scripts returns 1 otherwise,
@@ -27,7 +25,15 @@ class FixSg(CheckCommand, PathCommand):
     Concerning normal mode and dry-run mode, the script tries to
     delete non used bad default security groups. "Non used" means no
     VMIs are attached to them.
+
+    To run the command::
+
+        contrail-api-cli fix-sg [project/uuid]
+
+    If no project path is provided all projects are considered.
     """
+    description = "Fix default security group that shouldn't belong to a project"
+    yes = Option('-y', action='store_true', help='Assume Yes to all queries and do not prompt')
 
     @property
     def resource_type(self):

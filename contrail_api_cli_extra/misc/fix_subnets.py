@@ -8,19 +8,32 @@ from contrail_api_cli.command import Arg
 
 from ..utils import CheckCommand
 
-
-"""
-When the API server is not properly started the hooks that populates
-the kv store on subnet creation are not properly run. As a result
-doing neutron net-list will lead to the following error:
-
-    404-{u'NeutronError': {u'message': u'Subnet 646f986a-67c9-4e1b-bf13-59f18f787068 could not be found', u'type': u'SubnetNotFound', u'detail': u''}}
-
-This command check all the IPAM subnet informations and verifies that
-proper kv store keys exists for each subnet.
-"""
-
 class FixSubnets(CheckCommand):
+    """
+    When the API server is not properly started the hooks that populates
+    the kv store on subnet creation are not properly run. As a result
+    doing neutron net-list will lead to the following error::
+
+        404-{u'NeutronError': {u'message': u'Subnet 646f986a-67c9-4e1b-bf13-59f18f787068 could not be found', u'type': u'SubnetNotFound', u'detail': u''}}
+
+    This command check all the IPAM subnet informations and verifies that
+    proper kv store keys exists for each subnet.
+
+    This command assumes there is only one IPAM in the contrail installation
+    (``default-domain:default-project:default-network-ipam``).
+
+    To check all subnets run::
+
+        contrail-api-cli fix-subnets --check
+
+    To fix all subnets run::
+
+        contrail-api-cli fix-subnets [--dry-run]
+
+    Or to fix a particular subnet run::
+
+        contrail-api-cli fix-subnets <subnet_uuid> [--dry-run]
+    """
     description = "Fix subnets key-value store entries"
     subnet_uuid = Arg(nargs="?", help="subnet uuid to fix")
 

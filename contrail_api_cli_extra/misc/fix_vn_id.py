@@ -54,6 +54,20 @@ class Indexes(object):
 
 
 class FixVnId(ZKCommand, CheckCommand):
+    """Compare and fix virtual network IDs in Zookeeper and the API server.
+
+    Checks that the ZK lock for a VN has the correct index. Checks also that the VN
+    has a lock in ZK.
+
+    To check all VNs run::
+
+        contrail-api-cli fix-vn-id --check
+
+    To fix all VNs or a particular VN run::
+
+        contrail-api-cli fix-vn-id [--dry-run] [vn_uuid]
+
+    """
     description = "Fix the virtual network Zookeeper locks"
     yes = Option('-y', action='store_true', help='Assume Yes to all queries and do not prompt')
     vn_paths = Arg(nargs='*',

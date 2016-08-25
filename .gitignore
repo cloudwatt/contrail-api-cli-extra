@@ -2,3 +2,4 @@ dist
 *.pyc
 *.swp
 *.egg-info
+doc/build

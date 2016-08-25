@@ -15,6 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 class FindOrphanedProjects(Command):
+    """Command to find projects that are still in contrail but no
+    more in keystone.
+
+    Run::
+
+        contrail-api-cli find-orphaned-projects
+    """
+
     description = "Find projects that are not in keystone"
 
     def _check(self, project):
@@ -36,6 +44,26 @@ class FindOrphanedProjects(Command):
 
 
 class PurgeProject(Command):
+    """Command to purge a project. All related resources
+    are deleted.
+
+    .. warning::
+
+        This command is experimental and not fully tested.
+
+    This command works recursively by first trying to remove
+    the project. If other resources are linked to the project
+    the API will return a 409 response with all linked resources.
+    The command will then try to delete these resources and so
+    on until the project resource can be deleted.
+
+    Because of this no dry-run mode is possible.
+
+    To run the command::
+
+        contrail-api-cli --ns contrail_api_cli.clean purge-project project/uuid
+    """
+
     description = "Purge contrail projects"
     paths = Arg(nargs="+", help="path(s)", metavar='path',
                 complete="resources:project:path")

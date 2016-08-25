@@ -8,6 +8,14 @@ from ..utils import CheckCommand, PathCommand
 
 
 class CleanSIScheduling(CheckCommand, PathCommand):
+    """On some occasion a SI VM can be scheduled on multiple virtual-routers.
+
+    In such case the command will remove extraenous VR links on the SI VM::
+
+        contrail-api-cli --ns contrail_api_cli.clean clean-si-scheduling [service-instance/uuid]
+
+    ``--check`` and ``--dry-run`` options are available.
+    """
     description = "Clean bad vrouter scheduling"
 
     @property
@@ -41,6 +49,21 @@ class CleanSIScheduling(CheckCommand, PathCommand):
 
 
 class CleanStaleSI(CheckCommand, PathCommand):
+    """Clean stale service instances.
+
+    SIs are considered stale when:
+
+    * LBaaS SI has no pool
+    * LBaaS SI pool has no VIP
+    * LBaas SI VIP has no instance-ip
+    * SNAT SI has no logical-router
+
+    To run the command::
+
+        contrail-api-cli --ns contrail_api_cli.ns clean-stale-si [service-instance/uuid]
+
+    ``--check`` and ``--dry-run`` options are available.
+    """
     description = "Clean stale SIs"
 
     @property

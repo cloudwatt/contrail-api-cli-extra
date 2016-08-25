@@ -10,6 +10,18 @@ from ..utils import CheckCommand, ZKCommand, PathCommand
 
 
 class CleanRT(CheckCommand, ZKCommand, PathCommand):
+    """Removes stale route-targets.
+
+    RTs that are not linked to a logical-router or a routing-instance are
+    considered as staled and will be removed. If a ZK lock exists for the
+    RT it will be removed::
+
+        contrail-api-cli --ns contrail_api_cli.clean clean-route-target --zk-server <ip> [route-target/uuid]
+
+    If no route-target path is provided all RTs are considered. ``--check`` and ``--dry-run``
+    options are available.
+    """
+
     description = "Clean stale route targets"
 
     @property

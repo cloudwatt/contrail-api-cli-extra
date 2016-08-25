@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+Shared functions and classes for contrail_api_cli_extra commands.
+"""
+
 from __future__ import unicode_literals
 
 from six import text_type

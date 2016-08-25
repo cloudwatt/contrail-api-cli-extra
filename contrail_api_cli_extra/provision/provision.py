@@ -1,4 +1,257 @@
 # -*- coding: utf-8 -*-
+"""Given a JSON environment file provison the needed resources in contrail.
+
+The provision command works in two steps. First it will collect informations
+of the running environment and the wanted environment provided in the JSON file.
+Then it will make a diff of the two environments and add/remove/modify resources
+in the running environment.
+
+Anatomy of the environment file
+===============================
+
+The base structure of the file is as follow::
+
+    {
+        "name": "environ",
+        "namespace": "contrail_api_cli.provision",
+        "defaults": {},
+        "provision": {}
+    }
+
+* ``name`` is the name of the environment you want to provision
+* ``namespace`` is the command namespace to load to do the provisioning
+* ``defaults`` is an object containing default values used for provisioning
+  but also for collecting data of the running environment
+* ``provision`` is an object defining the resources that needs to be
+  provisioned in the running environment
+
+provision
+---------
+
+In the provision section you can defined the resource you need to provision
+on the installation.
+
+Each key correspond to a provision command. The content is a list of calls
+to the command. Example::
+
+    "provision": {
+        "bgp-router": [
+            {
+                "router-asn": 64512,
+                "router-ip": "10.0.0.1",
+                "router-address-families": [
+                    "route-target",
+                    "inet-vpn"
+                ]
+            }
+        ]
+    }
+
+In this case the provision command will call the `add-bgp-router` command if
+the bgp-router is not present on the installation.
+
+defaults
+--------
+
+The `defaults` section is similar to the `provision` section exept that keys
+don't take a list but only an object with the default parameters::
+
+    "defaults": {
+        "dns-nameserver": {
+          "network-ipam-fqname": "default-domain:default-project:default-network-ipam"
+        }
+    }
+    "provision": {
+        "dns-nameserver": [
+            {"ips": ["185.23.93.178", "185.23.93.179"]}
+        ]
+    }
+
+In this case the `network-ipam-fqname` will be used while reading the current list of dns nameservers
+and also when provisioning the list of nameservers.
+
+Provisioning examples
+=====================
+
+virtual-routers::
+
+    "provision": {
+        "vrouter": [
+            {
+                "vrouter-ip": 1.2.3.4,
+                "vrouter-name": "vrouter1"
+            },
+            {
+                "vrouter-ip": 1.2.3.5,
+                "vrouter-name": "vrouter2"
+            }
+        ]
+    }
+
+bgp-routers::
+
+    "defaults": {
+        "bgp-router": {
+            "router-address-families": [
+                "route-target",
+                "inet-vpn",
+                "erm-vpn"
+            ]
+        }
+    },
+    "provision": {
+        "bgp-router": [
+            {
+                "router-asn": 60940,
+                "router-ip": "10.2.0.1",
+                "router-type": "juniper",
+                "router-name": "mx",
+                "router-address-families": [
+                    "route-target",
+                    "inet-vpn"
+                ]
+            },
+            {
+                "router-ip": "10.0.0.2",
+                "router-asn": 64518,
+                "router-name": "control1"
+            },
+            {
+                "router-ip": "10.0.0.3",
+                "router-asn": 64518,
+                "router-name": "control2"
+            }
+        ]
+    }
+
+.. note::
+
+    The two contrail controllers will use the address families
+    listed in the `defaults` section. The mx one will use a different
+    list.
+
+dns nameservers::
+
+    "defaults": {
+        "dns-nameserver": {
+            "network-ipam-fqname": "default-domain:default-project:default-network-ipam"
+        }
+    },
+    "provision": {
+        "dns-nameserver": {
+            "ips": [
+                "185.23.93.178",
+                "185.23.93.179"
+            ]
+        }
+    }
+
+.. note::
+
+    When only one item has to be provisioned you can pass directly the object instead of
+    a list of objects.
+
+encapsulation order::
+
+    "provision": {
+        "encaps": {
+            "modes": [
+                "MPLSoUDP",
+                "MPLSoGRE",
+                "VXLAN"
+            ]
+        }
+    }
+
+global ASN::
+
+    "provision": {
+        "global-asn": {
+            "asn": 64518
+        }
+    }
+
+linklocal::
+
+    "provision": {
+        "linklocal": {
+            "fabric-dns-service-name": "metadata.nova.example.com",
+            "fabric-service-port": 8775,
+            "service-name": "metadata",
+            "service-ip": "169.254.169.254",
+            "service-port": 80
+        },
+    }
+
+virtual-networks::
+
+
+    "defaults": {
+        "vn": {
+            "project-fqname": "default-domain:openstack"
+        }
+    },
+    "provision": {
+        "vn": {
+            "virtual-network-name": "public",
+            "external": true
+        }
+    }
+
+subnets::
+
+    "defaults": {
+        "subnets": {
+            "virtual-network-fqnames": [
+                "default-domain:openstack:public"
+            ]
+        }
+    },
+    "provision": {
+        "subnets": {
+            "cidrs": [
+                "67.45.0.144/28",
+                "67.45.1.0/25"
+            ],
+            "virtual-network-fqname": "default-domain:openstack:public"
+        }
+    }
+
+.. note::
+
+    Order matters. When you bootstrap the environment the virtual-network must be
+    provisioned before the subnets.
+
+route-targets::
+
+    "defaults": {
+        "route-targets": {
+            "virtual-network-fqname": "default-domain:openstack:public"
+        }
+    }
+    "provision": {
+        "route-targets": {
+            "route-target-list": [
+                "target:64518:1",
+                "target:234.123.34.0:1",
+            ]
+        }
+    }
+
+Running the provisioning
+========================
+
+Once the JSON file is created you can validate the syntax with jq::
+
+    cat spec.json | jq .
+
+Then you can run the provision command::
+
+    contrail-api-cli provision spec.json
+
+The command will show the actions it will make and waits the input of
+the user to actually make the actions.
+"""
 from __future__ import unicode_literals
 import copy
 import argparse

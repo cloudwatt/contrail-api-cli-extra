@@ -16,14 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 def decode_string(dec_str, encoding='utf-8'):
-    """Decode the string previously encoded using urllib.quote_plus.
-
-    Eg. If dec_str = 'net%C3%A9%C3%B9'
-           type - 'unicode' or 'str'
-        @retval
-            ret_dec_str = 'neté
-            type - unicode
-    """
+    # Decode the string previously encoded using urllib.quote_plus.
+    # if dec_str = 'net%C3%A9%C3%B9' (unicode/str)
+    # return 'neté' (unicode)
     ret_dec_str = dec_str
     try:
         if type(ret_dec_str) is unicode:
@@ -35,7 +30,18 @@ def decode_string(dec_str, encoding='utf-8'):
 
 
 class OrphanedACL(Command):
-    description = "Clean all orphan ACLs that does not have parent"
+    """Removes stale ACLs.
+
+    ACL is considered as stale if it has no parent::
+
+        contrail-api-cli --ns contrail_api_cli.ns clean-orphaned-acl --cassandra-servers <ip1> <ip2>
+
+    .. note::
+
+        Because of an API server limitation the ACLs are removed directly from the cassandra cluster.
+        Thus, the cassandra cluster nodes IPs must be provided.
+    """
+    description = "Clean all ACLs that don't have any parent"
     force = Option('-f',
                    help="Delete orphan ACL (default: %(default)s)",
                    default=False,
@@ -67,7 +73,6 @@ class OrphanedACL(Command):
             if acl_uuid in valid_acl:
                 continue
             acl = Resource('access-control-list', uuid=acl_uuid, fetch=True)
-        #for acl in Collection('access-control-list', fetch=True, recursive=2):
             if ('parent_uuid' in acl.keys() and
                     'parent_type' in acl.keys() and
                     acl['parent_type'] == parent_type and
@@ -76,7 +81,7 @@ class OrphanedACL(Command):
                     parent_acl = acl.parent
                 except ResourceNotFound:
                     msg = ("The %s parent ACL %s was not found." %
-                          (parent_type.replace('-', ' '), acl['parent_uuid']))
+                           (parent_type.replace('-', ' '), acl['parent_uuid']))
                     if force:
                         msg = msg + " Delete orphan ACL %s." % acl.uuid
                         acl.delete()
