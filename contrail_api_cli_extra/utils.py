@@ -21,6 +21,8 @@ from contrail_api_cli.resource import Collection
 
 
 def ip_type(string):
+    """argparse type to validate IP adresses.
+    """
     try:
         return text_type(netaddr.IPAddress(string))
     except netaddr.AddrFormatError:
@@ -28,6 +30,8 @@ def ip_type(string):
 
 
 def network_type(string):
+    """argparse type to validate network adresses.
+    """
     try:
         return text_type(netaddr.IPNetwork(string))
     except netaddr.AddrFormatError:
@@ -35,6 +39,8 @@ def network_type(string):
 
 
 def port_type(value):
+    """argparse type to validate port numbers.
+    """
     try:
         value = int(value)
         if not 1 <= value <= 65535:
@@ -45,6 +51,8 @@ def port_type(value):
 
 
 def server_type(value):
+    """argparse type to validate a server:port option.
+    """
     server = value.split(':')
     if len(server) > 2:
         raise argparse.ArgumentTypeError("Server can be composed to the hostname and port separated by the ':' character")
@@ -55,6 +63,8 @@ def server_type(value):
 
 
 def md5_type(value):
+    """argparse type to validate a md5 hash.
+    """
     if value and not re.match(r"([a-fA-F\d]{32})", value):
         raise argparse.ArgumentTypeError("MD5 hash %s is not valid" % value)
     return value
@@ -104,6 +114,13 @@ class RouteTargetAction(argparse.Action):
 
 
 class ZKCommand(Command):
+    """Inherit from this class when a connection to the Zookeeper cluster
+    is needed.
+
+    This will add a `--zk-server` option to the command.
+
+    The ZK client is available in `self.zk_client`.
+    """
     zk_server = Option(help="zookeeper server (default: %(default)s)",
                        type=server_type,
                        default='localhost:2181')
@@ -121,6 +138,10 @@ class ZKCommand(Command):
 
 
 class CheckCommand(Command):
+    """Inherit from this class to add `--check` and `--dry-run` options.
+
+    Options values are stored in `self.check` and `self.dry_run` (True or False).
+    """
     check = Option('-c',
                    default=False,
                    action="store_true")
@@ -137,6 +158,13 @@ class CheckCommand(Command):
 
 @add_metaclass(abc.ABCMeta)
 class PathCommand(Command):
+    """Inherit from this class for a command that expect a list of
+    resource paths.
+
+    This will add a `path` argument to the command (nargs=*).
+
+    The selected resources are available in `self.resources`.
+    """
 
     @abc.abstractproperty
     def resource_type(self):

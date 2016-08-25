@@ -60,6 +60,15 @@ def _node_rendering(path, resource=None):
 
 
 class Dot(Command):
+    """Command to create a dot file from a list of paths.
+
+    The command will automatically add to the graph the parent, refs and
+    back_refs of the given resources::
+
+        contrail-api-cli dot path/to/res1 path/to/res2 -f /tmp/output.dot
+
+    `-e` option can be used to exclude resources from the graph.
+    """
     description = "Create a dot file representing provided resources"
     filename_output = Option('-f', help="Output Dot filename", required=True)
     exclude_resource_type = Option('-e', help="Exclude resource types",

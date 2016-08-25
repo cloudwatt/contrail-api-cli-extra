@@ -20,8 +20,8 @@ def to_zk_index(nid):
 
 
 class Indexes(object):
-    """Index managed by the user are always API index. They are internally
-    translated into Zookeeper indexes by this class."""
+    # Index managed by the user are always API index. They are internally
+    # translated into Zookeeper indexes by this class.
     start = 1
     end = 1 << 24
 
