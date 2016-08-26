@@ -10,7 +10,9 @@ from ..utils import CheckCommand, PathCommand
 
 
 class FixSg(CheckCommand, PathCommand):
-    """ It appears sometimes several default security groups have been
+    """Fix multiple default security groups on projects.
+
+    It appears sometimes several default security groups have been
     created. Normally, only one default security group should be
     created. When there are several security groups, some of them
     doesn't have the right project name in their fq_name. These

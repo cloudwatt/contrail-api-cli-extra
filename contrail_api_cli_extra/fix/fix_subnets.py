@@ -8,8 +8,10 @@ from contrail_api_cli.command import Arg
 
 from ..utils import CheckCommand
 
+
 class FixSubnets(CheckCommand):
-    """
+    """Fix subnet/vn association in kv store.
+
     When the API server is not properly started the hooks that populates
     the kv store on subnet creation are not properly run. As a result
     doing neutron net-list will lead to the following error::

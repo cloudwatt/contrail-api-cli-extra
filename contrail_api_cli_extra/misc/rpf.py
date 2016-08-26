@@ -2,8 +2,7 @@ from contrail_api_cli.command import Command, Arg, Option, expand_paths
 
 
 class RPF(Command):
-    """Simple command to enable or disable RPF (Reverse Path Forwarding) on
-    a VN.
+    """Simple command to enable or disable RPF (Reverse Path Forwarding) on a VN.
 
     To check if RPF is enabled or not run::
 

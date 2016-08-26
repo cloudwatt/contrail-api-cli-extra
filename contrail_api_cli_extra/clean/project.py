@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class FindOrphanedProjects(Command):
-    """Command to find projects that are still in contrail but no
-    more in keystone.
+    """Command to find projects that are still in contrail but no more in keystone.
 
     Run::
 
@@ -44,8 +43,7 @@ class FindOrphanedProjects(Command):
 
 
 class PurgeProject(Command):
-    """Command to purge a project. All related resources
-    are deleted.
+    """Command to purge a project. All related resources are deleted.
 
     .. warning::
 

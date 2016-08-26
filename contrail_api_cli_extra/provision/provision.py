@@ -257,6 +257,7 @@ import copy
 import argparse
 import json
 import inspect
+import sys
 from six import text_type
 import logging
 from collections import OrderedDict
@@ -287,6 +288,13 @@ class Provision(Command):
                    help="Don't ask for confirmation",
                    default=False,
                    action="store_true")
+
+    @property
+    def __doc__(self):
+        # Hack to include rst doc with sections
+        # not included by sphinx but can be view
+        # with the man command.
+        return sys.modules[__name__].__doc__
 
     def _get_current_env(self, keys):
         """Build the current environment of the given resources (keys).
