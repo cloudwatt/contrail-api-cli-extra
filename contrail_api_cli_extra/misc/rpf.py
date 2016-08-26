@@ -1,7 +1,12 @@
-from contrail_api_cli.command import Command, Arg, Option, expand_paths
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from contrail_api_cli.command import Option
+
+from ..utils import PathCommand
 
 
-class RPF(Command):
+class RPF(PathCommand):
     """Simple command to enable or disable RPF (Reverse Path Forwarding) on a VN.
 
     To check if RPF is enabled or not run::
@@ -15,14 +20,14 @@ class RPF(Command):
                 help='Enable RPF')
     off = Option(action='store_true',
                  help='Disable RPF')
-    paths = Arg(nargs='*',
-                metavar='vn',
-                help='List of VN')
 
-    def __call__(self, paths=None, on=False, off=False):
-        resources = expand_paths(paths,
-                                 predicate=lambda r: r.type == 'virtual-network')
-        for vn in resources:
+    @property
+    def resource_type(self):
+        return 'virtual-network'
+
+    def __call__(self, on=False, off=False, **kwargs):
+        super(RPF, self).__call__(**kwargs)
+        for vn in self.resources:
             vn.fetch()
             if 'virtual_network_properties' not in vn:
                 vn['virtual_network_properties'] = {
