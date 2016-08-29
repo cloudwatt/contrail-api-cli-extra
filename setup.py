@@ -7,6 +7,7 @@ install_requires = [
     'kazoo',
     'networkx',
     'pydotplus',
+    'python-novaclient',
 ]
 test_requires = []
 
