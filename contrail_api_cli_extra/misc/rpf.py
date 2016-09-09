@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from contrail_api_cli.command import Option
+from contrail_api_cli.utils import printo
 
 from ..utils import PathCommand
 
@@ -43,4 +44,5 @@ class RPF(PathCommand):
                 vn['virtual_network_properties']['rpf'] = None
                 vn.save()
             else:
-                return 'on' if vn['virtual_network_properties'].get('rpf') is None else 'off'
+                status = 'on' if vn['virtual_network_properties'].get('rpf') is None else 'off'
+                printo("%s : %s" % (self.current_path(vn), status))
