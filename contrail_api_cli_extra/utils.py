@@ -11,9 +11,12 @@ import netaddr
 import re
 import abc
 from six import add_metaclass
+import textwrap
 
 from kazoo.client import KazooClient
 from kazoo.handlers.gevent import SequentialGeventHandler
+
+from prettytable import PrettyTable
 
 from contrail_api_cli.command import Command, Arg, Option, expand_paths
 from contrail_api_cli.exceptions import CommandError
@@ -68,6 +71,79 @@ def md5_type(value):
     if value and not re.match(r"([a-fA-F\d]{32})", value):
         raise argparse.ArgumentTypeError("MD5 hash %s is not valid" % value)
     return value
+
+
+def format_column(column, width, depth=0):
+    result = ""
+    i = 0
+    if isinstance(column, list):
+        item = "* "
+        for val in column:
+            if i == 0:
+                result += item + format_column(val, width, depth + 1) + "\n"
+            else:
+                result += "  " * depth + item + format_column(val, width, depth + 1) + "\n"
+            i = i + 1
+    elif isinstance(column, tuple):
+        item = "- "
+        for val in column:
+            if i == 0:
+                result += item + format_column(val, width, depth + 1) + "\n"
+            else:
+                result += "  " * depth + item + format_column(val, width, depth + 1) + "\n"
+            i = i + 1
+    else:
+        result += "\n".join(textwrap.wrap(str(column), width))
+    return result
+
+
+def format_row(header, widths, row):
+    size = len(header)
+    result = []
+    for i in range(size):
+        fcell = format_column(row[i], widths[i])
+        result.append(fcell)
+    return result
+
+
+def format_table_ascii_delimiters(header, widths, data):
+    """ format_table_ascii_delimiters: return ascii table with delimitation and lines
+        wrapped.
+
+        Usage:
+
+        header = ["name", "age", "job", "bag"]
+        widths = [20, 4, 10, 40]
+        data = [["foo", 54, "policeman", ("pen", "knife", "glasses")],
+               ["bar", 28, "fireman", ("socket", "hat")],
+                       ["joe", 36, "anthropologist", ("computer", "keyboard")]]
+
+        format_table2(header, widths, data)
+
+        Return:
+
+        +------+-----+------------+------------+
+        | name | age | job        | bag        |
+        +------+-----+------------+------------+
+        | foo  | 54  | policeman  | - pen      |
+        |      |     |            | - knife    |
+        |      |     |            | - glasses  |
+        |      |     |            |            |
+        | bar  | 28  | fireman    | - socket   |
+        |      |     |            | - hat      |
+        |      |     |            |            |
+        | joe  | 36  | anthropolo | - computer |
+        |      |     | gist       | - keyboard |
+        |      |     |            |            |
+        +------+-----+------------+------------+
+    """
+    table = PrettyTable()
+    table.field_names = header
+    table.align = "l"
+    for row in data:
+        row = format_row(header, widths, row)
+        table.add_row(row)
+    return table
 
 
 class RouteTargetAction(argparse.Action):
