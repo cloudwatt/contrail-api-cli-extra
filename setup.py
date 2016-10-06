@@ -8,6 +8,7 @@ install_requires = [
     'networkx',
     'pydotplus',
     'python-novaclient',
+    'PrettyTable'
 ]
 test_requires = []
 
