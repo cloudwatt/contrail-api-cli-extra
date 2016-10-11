@@ -27,6 +27,28 @@ class UnhandledResourceType(Exception):
 
 
 class FixZkIP(ZKCommand, CheckCommand, PathCommand):
+    """Remove or add ZK locks based on the IPAM configuration.
+
+    Sometimes, when an instance-ip or a floating-ip is created or deleted, its
+    associated zookeeper node isn't managed properly.
+
+    This led to situation where, no IPs are reserved from the Contrail API
+    standpoint and nevertheless, you are not able to get one, or the same
+    floating IP address is reserved for several users/tenants.
+
+    This command list all zookeeper nodes for a given network (which may
+    contain one or several subnet) and compare the nodes with the IPs found
+    with the contrail API. For each IP found in zookeeper and not in
+    the contrail API (abusive lock scenario), the command delete the
+    associated zookeeper node. Then, for each IP found in API, and not in Zookeeper,
+    the command creates the appropriate lock.
+
+    Usage::
+
+        contrail-api-cli fix-zk-ip --zk-server <IP> [path/to/virtual-network] [--dry-run]
+
+    If no virtual-network is given, all virtual-networks are considered.
+    """
     description = "Remove or add ZK locks based on the IPAM configuration"
     yes = Option('-y', action='store_true',
                  help='Assume Yes to all queries and do not prompt')
