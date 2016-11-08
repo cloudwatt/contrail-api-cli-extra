@@ -5,6 +5,7 @@ from six import text_type
 
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.exceptions import ResourceNotFound
+from contrail_api_cli.command import Option
 
 from ..utils import CheckCommand, ZKCommand, PathCommand
 
@@ -20,8 +21,14 @@ class CleanRT(CheckCommand, ZKCommand, PathCommand):
 
     If no route-target path is provided all RTs are considered. ``--check`` and ``--dry-run``
     options are available.
+
+    You can exclude RT from the cleaning process::
+
+        contrail-api-cli --ns contrail_api_cli.clean clean-route-target --exclude <RT_FQNAME> --exclude <RT_FQNAME> [...]
     """
 
+    exclude = Option('-e', action="append", default=[],
+                     help="Exclude RT from the clean procedure")
     description = "Clean stale route targets"
 
     @property
@@ -74,12 +81,16 @@ class CleanRT(CheckCommand, ZKCommand, PathCommand):
         except ResourceNotFound:
             return
         if not rt.get('routing_instance_back_refs') and not rt.get('logical_router_back_refs'):
-            self.log('RT %s staled' % rt.fq_name, rt)
-            if self.check is not True:
-                self._clean_rt(rt)
+            if text_type(rt.fq_name) in self.exclude:
+                self.log('RT %s staled [excluded]' % rt.fq_name, rt)
+            else:
+                self.log('RT %s staled' % rt.fq_name, rt)
+                if self.check is not True:
+                    self._clean_rt(rt)
         else:
             self._ensure_lock(rt)
 
-    def __call__(self, **kwargs):
+    def __call__(self, exclude=None, **kwargs):
         super(CleanRT, self).__call__(**kwargs)
+        self.exclude = exclude
         parallel_map(self._check_rt, self.resources, workers=50)
