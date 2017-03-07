@@ -50,11 +50,11 @@ class CheckBadRefs(Command):
             Resource(ref_type.replace('_', '-'), uuid=ref_uuid, check=True)
             return False
         except ResourceNotFound:
-            printo("[%s] broken ref to missing %s/%s" % (uuid, ref_type.replace('_', '-'), ref_uuid))
+            printo("[%s] broken ref to missing %s" % (uuid, ref))
             return True
 
     def _check_resource_refs(self, uuid, values):
-        ref_attrs = ['ref:', 'backref:', 'children:']
+        ref_attrs = ['ref:', 'backref:', 'children:', 'parent:']
         for key, value in values.items():
             to_check = []
             for attr in ref_attrs:
