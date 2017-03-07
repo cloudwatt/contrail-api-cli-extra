@@ -76,15 +76,15 @@ class CheckBadRefs(Command):
         pool = ConnectionPool('config_db_uuid', server_list=cassandra_servers)
         uuid_cf = ColumnFamily(pool, 'obj_uuid_table')
         if uuids:
-            def uuids():
+            def uuids_g():
                 for uuid in uuids:
                     yield uuid
         else:
-            def uuids():
+            def uuids_g():
                 for k, v in uuid_cf.get_range(column_count=1, filter_empty=True):
                     yield k
 
-        for uuid in uuids():
+        for uuid in uuids_g():
             values = dict(uuid_cf.xget(uuid))
             res = self._get_current_resource(uuid, values)
             bad_refs = self._check_resource_refs(uuid, values)
