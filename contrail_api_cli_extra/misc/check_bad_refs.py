@@ -63,12 +63,11 @@ class CheckBadRefs(Command):
             return True
 
     def _check_resource_refs(self, uuid, values):
-        ref_attrs = ['ref:', 'backref:', 'children:', 'parent:']
-        for key, value in values.items():
-            to_check = []
-            for attr in ref_attrs:
-                if key.startswith(attr):
-                    to_check.append(key)
+        ref_attrs = ('ref:', 'backref:', 'children:', 'parent:')
+        to_check = []
+        for key, _ in values.items():
+            if key.startswith(ref_attrs):
+                to_check.append(key)
         results = parallel_map(self._check_ref, to_check, args=(uuid,), workers=20)
         return any(results)
 
