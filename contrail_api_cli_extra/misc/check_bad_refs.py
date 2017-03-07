@@ -21,7 +21,16 @@ class PropertiesEncoder(json.JSONEncoder):
 
 
 class CheckBadRefs(Command):
-    """Check for bad references.
+    """Check for broken references.
+
+    The command will read all objects from the cassandra DB then
+    for each object check that references exists in the API.
+
+    References includes refs, back refs, children, parents.
+
+    To run the command:
+
+        contrail-api-cli check-bad-refs --cassandra-servers db:9160 [uuids...]
     """
     description = "Check for broken references"
     uuids = Arg(help="Check specific uuids",
