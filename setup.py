@@ -69,6 +69,7 @@ setup(
             'provision = contrail_api_cli_extra.provision.provision:Provision',
             'rpf = contrail_api_cli_extra.misc.rpf:RPF',
             'dot = contrail_api_cli_extra.misc.dot:Dot',
+            'graph = contrail_api_cli_extra.misc.graph:Graph',
             'find-orphaned-projects = contrail_api_cli_extra.clean.project:FindOrphanedProjects',
             'reschedule-vm = contrail_api_cli_extra.misc.vm:RescheduleVM',
             'fix-vn-id = contrail_api_cli_extra.fix.fix_vn_id:FixVnId',
