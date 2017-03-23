@@ -77,6 +77,7 @@ setup(
             'fix-subnets = contrail_api_cli_extra.fix.fix_subnets:FixSubnets',
             'fix-zk-ip = contrail_api_cli_extra.fix.fix_zk_ip:FixZkIP',
             'check-bad-refs = contrail_api_cli_extra.misc.check_bad_refs:CheckBadRefs',
+            'update-quota = contrail_api_cli_extra.misc.update_quota:UpdateQuota',
         ],
         'contrail_api_cli.migration': [
             'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
