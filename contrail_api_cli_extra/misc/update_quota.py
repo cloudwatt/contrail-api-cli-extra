@@ -20,6 +20,8 @@ class UpdateQuota(CheckCommand, PathCommand):
     nova_api_version = Option('-v', default="2.1")
     yes = Option('-y', action='store_true',
                  help='Assume Yes to all queries and do not prompt')
+    exclude = Option('-e', action="append", default=[],
+                     help="Exclude quota from the update procedure")
 
     @property
     def resource_type(self):
@@ -83,13 +85,12 @@ class UpdateQuota(CheckCommand, PathCommand):
                     project.save()
 
 
-    def __call__(self, nova_api_version=None, yes=False, **kwargs):
+    def __call__(self, nova_api_version=None, yes=False, exclude=[], **kwargs):
         super(UpdateQuota, self).__call__(**kwargs)
         self.nova = nclient.Client(nova_api_version, session=ContrailAPISession.session)
         default_project = Resource('project', fq_name='default-domain:default-project')
         default_project.fetch()
         lbaas_quota = ['virtual_ip', 'loadbalancer_pool', 'loadbalancer_member', 'loadbalancer_healthmonitor']
-        technical_tenants = ('default-domain:default-project', 'default-domain:openstack')
 
         # TODO: It would be nice to apply some rules like this instead of hard-code them
         # lbaas_quota_rules = {'loadbalancer_member': 'instances'}
@@ -99,8 +100,8 @@ class UpdateQuota(CheckCommand, PathCommand):
 
         for p in self.resources:
             p.fetch()
-            # Don't touch "technical" tenants
-            if (str(p['fq_name']) in technical_tenants):
+            # Don't touch excluded tenants
+            if (str(p['fq_name']) in exclude):
                 print("INFO : Skipping technical tenant %s." % str(p['fq_name']))
                 continue
             if (not yes and
