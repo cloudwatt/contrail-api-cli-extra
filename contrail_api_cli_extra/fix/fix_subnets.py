@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from contrail_api_cli.client import ContrailAPISession, HTTPError
+from contrail_api_cli.client import HttpError
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.command import Arg
+from contrail_api_cli.context import Context
 
 from ..utils import CheckCommand
 
@@ -52,12 +53,12 @@ class FixSubnets(CheckCommand):
         subnet_key = self._subnet_key(vn_uuid, subnet)
         try:
             self.session.search_kv_store(subnet_uuid)
-        except HTTPError:
+        except HttpError:
             printo('Missing key %s for subnet %s' % (subnet_uuid, subnet_uuid))
             to_add.append((subnet_uuid, subnet_key))
         try:
             self.session.search_kv_store(subnet_key)
-        except HTTPError:
+        except HttpError:
             printo('Missing key %s for subnet %s' % (subnet_key, subnet_uuid))
             to_add.append((subnet_key, subnet_uuid))
         return to_add
@@ -71,7 +72,7 @@ class FixSubnets(CheckCommand):
     def __call__(self, subnet_uuid=None, **kwargs):
         super(FixSubnets, self).__call__(**kwargs)
 
-        self.session = ContrailAPISession.session
+        self.session = Context().session
         self.subnet_uuid = subnet_uuid
 
         ipam = Resource('network-ipam',

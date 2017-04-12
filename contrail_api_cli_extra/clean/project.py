@@ -9,7 +9,8 @@ from contrail_api_cli.command import Command, Arg, Option, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map, FQName, continue_prompt
 from contrail_api_cli.exceptions import ChildrenExists, BackRefsExists, ResourceNotFound, CommandError
-from contrail_api_cli.client import ContrailAPISession, HTTPError
+from contrail_api_cli.client import HttpError
+from contrail_api_cli.context import Context
 
 
 logger = logging.getLogger(__name__)
@@ -31,14 +32,14 @@ class FindOrphanedProjects(Command):
         keystone_uuid = project.uuid.replace('-', '')
         try:
             self.kclient.tenants.get(keystone_uuid)
-        except HTTPError as e:
+        except HttpError as e:
             if e.http_status == 404:
                 printo(self.current_path(project))
             else:
                 raise
 
     def __call__(self):
-        self.kclient = kclient.Client(session=ContrailAPISession.session)
+        self.kclient = kclient.Client(session=Context().session)
         parallel_map(self._check, Collection('project', fetch=True),
                      workers=50)
 
@@ -117,7 +118,7 @@ class PurgeProject(Command):
             pass
 
     def __call__(self, paths=None, nova_api_version=None):
-        self.nclient = nclient.Client(nova_api_version, session=ContrailAPISession.session)
+        self.nclient = nclient.Client(nova_api_version, session=Context().session)
 
         self.actions = {
             BackRefsExists: {

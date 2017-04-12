@@ -2,12 +2,13 @@ import sys
 from setuptools import setup, find_packages
 
 install_requires = [
-    'contrail-api-cli<0.2',
+    'contrail-api-cli>=0.2',
     'pycassa',
     'kazoo',
     'networkx',
     'pydotplus',
     'python-novaclient',
+    'python-keystoneclient',
     'PrettyTable'
 ]
 test_requires = []
