@@ -2,7 +2,7 @@ import sys
 from setuptools import setup, find_packages
 
 install_requires = [
-    'contrail-api-cli>=0.1',
+    'contrail-api-cli==0.1',
     'pycassa',
     'kazoo',
     'networkx',
@@ -18,7 +18,7 @@ if sys.version_info[0] == 2:
 
 setup(
     name='contrail-api-cli-extra',
-    version='0.3',
+    version='0.4',
     description="Supplementary commands for contrail-api-cli",
     author="Jean-Philippe Braun",
     author_email="jean-philippe.braun@cloudwatt.com",
