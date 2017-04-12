@@ -2,7 +2,7 @@ import sys
 from setuptools import setup, find_packages
 
 install_requires = [
-    'contrail-api-cli==0.1',
+    'contrail-api-cli<0.2',
     'pycassa',
     'kazoo',
     'networkx',
