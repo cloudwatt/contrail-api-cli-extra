@@ -90,6 +90,7 @@ setup(
             'clean-stale-si = contrail_api_cli_extra.clean.si:CleanStaleSI',
             'clean-route-target = contrail_api_cli_extra.clean.rt:CleanRT',
             'clean-si-scheduling = contrail_api_cli_extra.clean.si:CleanSIScheduling',
+            'clean-subnet = contrail_api_cli_extra.clean.subnet:CleanSubnet',
         ]
     },
     classifiers=[
