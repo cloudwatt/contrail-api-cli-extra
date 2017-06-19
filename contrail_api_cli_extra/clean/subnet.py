@@ -53,8 +53,7 @@ class CleanSubnet(CheckCommand):
                 vn_uuid = str("%s %s/%s" % (vn['uuid'],
                                             subnet['subnet']['ip_prefix'],
                                             subnet['subnet']['ip_prefix_len']))
-                subnet_uuid = str(
-                    vn['attr']['ipam_subnets'][0]['subnet_uuid'])
+                subnet_uuid = str(subnet['subnet_uuid'])
 
                 kv.update({subnet_uuid: vn_uuid})
                 kv.update({vn_uuid: subnet_uuid})
