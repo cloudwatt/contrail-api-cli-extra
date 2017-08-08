@@ -5,6 +5,7 @@ from six import text_type
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.utils import printo
 from contrail_api_cli.exceptions import ResourceNotFound
+from contrail_api_cli.schema import require_schema
 
 from ..utils import CheckCommand, PathCommand
 
@@ -21,11 +22,12 @@ class MigrateRT22132(CheckCommand, PathCommand):
     def resource_type(self):
         return 'route-target'
 
+    @require_schema(version='2.21')
     def __call__(self, **kwargs):
         super(MigrateRT22132, self).__call__(**kwargs)
 
         config = Resource('global-system-config', fq_name='default-global-system-config', fetch=True)
-        asn = config['autonomous_system']
+        asn = config.autonomous_system
 
         for rt in self.resources:
             if not text_type(asn) == rt.fq_name[1]:

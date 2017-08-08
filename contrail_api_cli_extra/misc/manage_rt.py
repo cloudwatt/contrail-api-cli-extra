@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from contrail_api_cli.command import Option, Arg, Command, expand_paths
 from contrail_api_cli.utils import printo, format_table
 from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.schema import require_schema
 
 
 mode_map = {
@@ -77,6 +78,7 @@ class ManageRT(Command):
         vn.save()
         printo('RT %s deleted from VN' % name)
 
+    @require_schema(version='>= 3')
     def __call__(self, path=None, mode=None, action=None, name=None):
         if not action == 'show' and not name:
             raise CommandError("--name is required")

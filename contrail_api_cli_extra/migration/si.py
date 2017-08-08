@@ -8,10 +8,12 @@ from keystoneclient.exceptions import Conflict
 from contrail_api_cli.command import Arg, expand_paths
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import printo, FQName
+from contrail_api_cli.schema import require_schema
 
 from ..utils import CheckCommand
 
 
+@require_schema(version='1.10')
 class MigrateSI110221(CheckCommand):
     """Migration command for SI from 1.10 version to 2.21 version
     """
