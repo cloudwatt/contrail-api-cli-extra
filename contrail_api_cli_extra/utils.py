@@ -202,13 +202,16 @@ class ZKCommand(Command):
                        default='localhost:2181')
 
     def __call__(self, zk_server=None, **kwargs):
-        handler = SequentialGeventHandler()
-        self.zk_client = KazooClient(hosts=zk_server, timeout=1.0,
-                                     handler=handler)
-        try:
-            self.zk_client.start()
-        except handler.timeout_exception:
-            raise CommandError("Can't connect to Zookeeper at %s" % zk_server)
+        if not hasattr(self, 'zk_client'):
+            handler = SequentialGeventHandler()
+            self.zk_client = KazooClient(hosts=zk_server, timeout=1.0,
+                                         handler=handler)
+            try:
+                self.zk_client.start()
+            except handler.timeout_exception:
+                raise CommandError("Can't connect to Zookeeper at %s" % zk_server)
+        elif not self.zk_client.connected:
+            self.zk_client.restart()
 
         super(ZKCommand, self).__call__(**kwargs)
 
