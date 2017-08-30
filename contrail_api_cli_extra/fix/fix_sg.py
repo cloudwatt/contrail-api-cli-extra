@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from contrail_api_cli.command import Option
-from contrail_api_cli.utils import continue_prompt
 from contrail_api_cli.exceptions import CommandError
-from contrail_api_cli.utils import FQName
+from contrail_api_cli.utils import FQName, printo
 
-from ..utils import CheckCommand, PathCommand
+from ..utils import CheckCommand, PathCommand, ConfirmCommand
 
 
-class FixSg(CheckCommand, PathCommand):
+class FixSg(CheckCommand, PathCommand, ConfirmCommand):
     """Fix multiple default security groups on projects.
 
     It appears sometimes several default security groups have been
@@ -35,35 +33,32 @@ class FixSg(CheckCommand, PathCommand):
     If no project path is provided all projects are considered.
     """
     description = "Fix default security group that shouldn't belong to a project"
-    yes = Option('-y', action='store_true', help='Assume Yes to all queries and do not prompt')
 
     @property
     def resource_type(self):
         return "project"
 
+    @property
+    def confirm_message(self):
+        return "Some SGs can be deleted. Are you sure to continue?"
+
     def _handle_sg(self, status, sg, delete=True):
-        print "    %s  SG: %s %s" % (status, sg.uuid, sg.fq_name)
+        printo("    %s  SG: %s %s" % (status, sg.uuid, sg.fq_name))
         if not self.check:
             used = False
             sg.fetch()
             for vmi in sg.back_refs.virtual_machine_interface:
                 used = True
-                print "        Used by VMI %s" % vmi.uuid
+                printo("        Used by VMI %s" % vmi.uuid)
             if not used and delete:
                 if not self.dry_run:
-                    print "            Deleting SG %s ..." % sg.uuid
+                    printo("            Deleting SG %s ..." % sg.uuid)
                     sg.delete()
                 else:
-                    print "            [dry-run] Deleting SG %s ..." % sg.uuid
+                    printo("            [dry-run] Deleting SG %s ..." % sg.uuid)
 
-    def __call__(self, paths=None, yes=False, **kwargs):
+    def __call__(self, paths=None, **kwargs):
         super(FixSg, self).__call__(**kwargs)
-        if (not yes and
-                not self.dry_run and
-                not self.check and
-                not continue_prompt("Some SGs will be deleted. Are you sure to continue?")):
-            raise CommandError("Exiting.")
-
         bad_sg_exists = False
         for r in self.resources:
             r.fetch()
@@ -79,7 +74,7 @@ class FixSg(CheckCommand, PathCommand):
                             good_sg.append(sg)
                 if bad_sg != []:
                     bad_sg_exists = True
-                    print "Tenant       %s %s" % (r.uuid, r.fq_name)
+                    printo("Tenant       %s %s" % (r.uuid, r.fq_name))
                     for sg in bad_sg:
                         self._handle_sg("Bad ", sg)
                     for sg in good_sg:

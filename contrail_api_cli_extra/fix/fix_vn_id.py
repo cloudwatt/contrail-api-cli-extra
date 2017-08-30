@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
 from six import text_type
-
-from contrail_api_cli.resource import Collection
-from contrail_api_cli.command import Option, Arg, expand_paths
-from contrail_api_cli.utils import continue_prompt
-from contrail_api_cli.exceptions import CommandError
 
 import kazoo.exceptions
 
-from ..utils import ZKCommand, CheckCommand
+from contrail_api_cli.exceptions import CommandError
+from contrail_api_cli.utils import printo
+
+from ..utils import ZKCommand, CheckCommand, ConfirmCommand, PathCommand
 
 ZK_BASEPATH = "/id/virtual-networks"
 
@@ -47,13 +44,13 @@ class Indexes(object):
         zk_index = to_zk_index(index)
         if dry_run:
             print "[dry_run] ",
-        print "%s Create Zookeeper %s with value %s" % (resource.path, ZK_BASEPATH + "/" + zk_index, value)
+        printo("%s Create Zookeeper %s with value %s" % (resource.path, ZK_BASEPATH + "/" + zk_index, value))
         if not dry_run:
             self._zk_client.create(ZK_BASEPATH + "/" + zk_index, value=value)
         self._zk_indexes.append(zk_index)
 
 
-class FixVnId(ZKCommand, CheckCommand):
+class FixVnId(PathCommand, ZKCommand, CheckCommand, ConfirmCommand):
     """Compare and fix virtual network IDs in Zookeeper and the API server.
 
     Checks that the ZK lock for a VN has the correct index. Checks also that the VN
@@ -69,18 +66,22 @@ class FixVnId(ZKCommand, CheckCommand):
 
     """
     description = "Fix the virtual network Zookeeper locks"
-    yes = Option('-y', action='store_true', help='Assume Yes to all queries and do not prompt')
-    vn_paths = Arg(nargs='*',
-                   metavar='vn_paths',
-                   help='List of VN. If no path is provided, all VNs are considered')
 
-    def fix(self, vn, dry_run=True):
+    @property
+    def resource_type(self):
+        return 'virtual-network'
+
+    @property
+    def confirm_message(self):
+        return 'Do you really want to repair virtual networks?'
+
+    def fix(self, vn):
         if vn['reason'] == "nolock":
             lock = vn['resource']["virtual_network_network_id"]
         if vn['reason'] == "badlock":
             lock = self.indexes.get_available_index()
 
-        self.indexes.create(lock, vn['resource'], dry_run)
+        self.indexes.create(lock, vn['resource'], self.dry_run)
 
         if vn['reason'] == "badlock":
             resource = vn["resource"]
@@ -89,48 +90,41 @@ class FixVnId(ZKCommand, CheckCommand):
                 resource["virtual_network_properties"]["network_id"] = lock
             except KeyError:
                 pass
-            if dry_run:
+            if self.dry_run:
                 print "[dry_run] ",
-            print "%s Set VN ID to %s" % (resource.path, lock)
-            if not dry_run:
+            printo("%s Set VN ID to %s" % (resource.path, lock))
+            if not self.dry_run:
                 resource.save()
 
-    def generate(self, vn_paths):
+    def generate(self):
         result = []
-        if vn_paths == []:
-            vns = Collection("virtual-network", fetch=True, detail=True)
-        else:
-            vns = expand_paths(vn_paths)
-            for vn in vns:
-                vn.fetch()
-
-        for r in vns:
-            nid = r["virtual_network_network_id"]
-            try:
-                zk_data, _ = self.zk_client.get(ZK_BASEPATH + "/" + to_zk_index(nid))
-            except kazoo.exceptions.NoNodeError:
-                result.append({"reason": "nolock", "nid": nid, "path": r.path, "api-fqname": text_type(r.fq_name), "resource": r})
-                continue
-            if "%s" % zk_data.decode('utf-8') != "%s" % r.fq_name:
-                result.append({"reason": "badlock", "nid": nid, "path": r.path, "api-fqname": text_type(r.fq_name), "zk-fqname": zk_data, "resource": r})
+        for r in self.resources:
+            r.fetch()
+            nid = r.get("virtual_network_network_id", None)
+            if nid is not None:
+                try:
+                    zk_data, _ = self.zk_client.get(ZK_BASEPATH + "/" + to_zk_index(nid))
+                    if "%s" % zk_data.decode('utf-8') != "%s" % r.fq_name:
+                        result.append({"reason": "badlock", "nid": nid, "path": r.path,
+                                       "api-fqname": text_type(r.fq_name), "zk-fqname": zk_data,
+                                       "resource": r})
+                except kazoo.exceptions.NoNodeError:
+                    result.append({"reason": "nolock", "nid": nid, "path": r.path,
+                                   "api-fqname": text_type(r.fq_name), "resource": r})
+            else:
+                result.append({"reason": "badlock", "nid": nid, "path": r.path,
+                               "api-fqname": text_type(r.fq_name), "resource": r})
         return result
 
-    def __call__(self, vn_paths=None, yes=False, **kwargs):
+    def __call__(self, vn_paths=None, **kwargs):
         super(FixVnId, self).__call__(**kwargs)
-        if (not yes and
-                not self.dry_run and
-                not self.check and
-                not continue_prompt("Do you really want to repair virtual networks?")):
-            print "Exiting."
-            exit()
-
         self.indexes = None
-        result = self.generate(vn_paths)
+        result = self.generate()
         self.indexes = Indexes(self.zk_client)
         for r in result:
             if r['reason'] == "nolock":
-                print "No  lock for %(path)s with VN Id %(nid)6s" % r
+                printo("No  lock for %(path)s with VN Id %(nid)6s" % r)
             if r['reason'] == "badlock":
-                print "Bad lock for %(path)s with VN Id %(nid)6s zk-fqname: %(zk-fqname)s ; api-fqname: %(api-fqname)s" % r
+                printo("Bad lock for %(path)s with VN Id %(nid)6s zk-fqname: %(zk-fqname)s ; api-fqname: %(api-fqname)s" % r)
             if not self.check:
-                self.fix(r, dry_run=self.dry_run)
+                self.fix(r)

@@ -6,12 +6,10 @@ from collections import namedtuple
 
 from netaddr import IPNetwork, IPAddress, AddrFormatError
 
-from contrail_api_cli.command import Option
-from contrail_api_cli.utils import continue_prompt
-from contrail_api_cli.exceptions import (CommandError,
-                                         ResourceNotFound)
+from contrail_api_cli.exceptions import CommandError, ResourceNotFound
+from contrail_api_cli.utils import printo
 
-from ..utils import ZKCommand, CheckCommand, PathCommand
+from ..utils import ZKCommand, CheckCommand, PathCommand, ConfirmCommand
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +24,7 @@ class UnhandledResourceType(Exception):
     pass
 
 
-class FixZkIP(ZKCommand, CheckCommand, PathCommand):
+class FixZkIP(ZKCommand, CheckCommand, PathCommand, ConfirmCommand):
     """Remove or add ZK locks based on the IPAM configuration.
 
     Sometimes, when an instance-ip or a floating-ip is created or deleted, its
@@ -50,12 +48,14 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
     If no virtual-network is given, all virtual-networks are considered.
     """
     description = "Remove or add ZK locks based on the IPAM configuration"
-    yes = Option('-y', action='store_true',
-                 help='Assume Yes to all queries and do not prompt')
 
     @property
     def resource_type(self):
         return "virtual-network"
+
+    @property
+    def confirm_message(self):
+        return 'Do you really want to repair networks ?'
 
     def _zk_node_for_subnet(self, fqname, subnet):
         return ('/api-server/subnets/%s:%s/%s' %
@@ -113,7 +113,7 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                     msg = ('{0} INVALID IP : zk_path={1}/{2}'
                            .format(text_type(ip), zk_subnet_req, text_type(ip)))
                     logger.warning(msg)
-                    print(msg)
+                    printo(msg)
                     continue
                 try:
                     self._get_ip_subnet([s], zk_ip)
@@ -124,7 +124,7 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                                    zk_subnet_req,
                                    int(zk_ip)))
                     logger.warning(msg)
-                    print(msg)
+                    printo(msg)
                     continue
                 zk_ips[zk_ip] = zk_subnet_req + '/' + text_type(int(zk_ip)).zfill(10)
 
@@ -156,7 +156,7 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                        'valid IP address. unable to check it.'
                        .format(iip_ip, vn.fq_name))
                 logger.info(msg)
-                print(msg)
+                printo(msg)
 
         for pool in vn.children.floating_ip_pool:
             try:
@@ -177,7 +177,7 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                            'valid IP address. unable to check it.'
                            .format(fip_ip, vn.fq_name))
                     logger.info(msg)
-                    print(msg)
+                    printo(msg)
                     continue
 
         return api_ips
@@ -186,7 +186,7 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
         if self.zk_client.exists(text_type(zk_req)):
             msg = ('{0} already exists'.format(zk_req))
             logger.info(msg)
-            print(msg)
+            printo(msg)
             self.stats['miss_lock_fixed'] += 1
             return
         if not self.dry_run:
@@ -205,15 +205,15 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
 
     def del_znode_ip(self, ip, zk_path):
         msg = ("Deleting zookeeper node %d for IP %s" % (int(ip), ip))
-        print(msg)
+        printo(msg)
         if not self.dry_run:
             try:
                 self.zk_client.delete(zk_path)
                 self.stats['abusive_lock_fixed'] += 1
             except:
                 self.stats['abusive_lock_fix_failed'] += 1
-                raise CommandError('Unable to delete zookeeper znode for ip '
-                                   '%s with path %s' % (ip, zk_path))
+                printo('Unable to delete zookeeper znode for ip '
+                      '%s with path %s' % (ip, zk_path))
 
     def add_ip_lock(self, vn, ip, data_lock):
         try:
@@ -222,7 +222,7 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
             self.stats['miss_lock_fix_failed'] += 1
             return
         msg = ('Creating zookeeper node %s for IP %s' % (zk_req, ip))
-        print(msg)
+        printo(msg)
         if not self.dry_run:
             self.create_znode(zk_req, data_lock)
 
@@ -270,7 +270,7 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                     except (ResourceNotFound, UnhandledResourceType) as e:
                         msg = e.msg
                         logger.warning(e)
-                        print(msg)
+                        printo(msg)
 
             if ip in api_ips:
                 ips[ip].update({'resource': api_ips[ip]})
@@ -292,24 +292,24 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
             status = 'OK'
         else:
             status = 'KO'
-        print('Status : %s' % status)
+        printo('Status : %s' % status)
         if status == 'KO':
-            print('Healthy locks : %d ' % self.stats['healthy_lock'])
-            print('Missing locks : %d ' % self.stats['miss_lock'])
+            printo('Healthy locks : %d ' % self.stats['healthy_lock'])
+            printo('Missing locks : %d ' % self.stats['miss_lock'])
             if not self. dry_run:
-                print('Fixed missing locks : %d' %
-                      self.stats['miss_lock_fixed'])
-                print('Failed missing locks fix: %d' %
-                      self.stats['miss_lock_fix_failed'])
-            print('Abusive locks : %d' % self.stats['abusive_lock'])
+                printo('Fixed missing locks : %d' %
+                       self.stats['miss_lock_fixed'])
+                printo('Failed missing locks fix: %d' %
+                       self.stats['miss_lock_fix_failed'])
+            printo('Abusive locks : %d' % self.stats['abusive_lock'])
             if not self.dry_run:
-                print('Fixed abusive locks : %d' %
-                      self.stats['abusive_lock_fixed'])
-                print('Failed abusive locks fix: %d' %
-                      self.stats['abusive_lock_fix_failed'])
-        print()
+                printo('Fixed abusive locks : %d' %
+                       self.stats['abusive_lock_fixed'])
+                printo('Failed abusive locks fix: %d' %
+                       self.stats['abusive_lock_fix_failed'])
+        printo("")
 
-    def __call__(self, yes=False, **kwargs):
+    def __call__(self, **kwargs):
         super(FixZkIP, self).__call__(**kwargs)
         for r in self.resources:
             self.stats = {'miss_lock': 0,
@@ -319,22 +319,16 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand):
                           'abusive_lock_fixed': 0,
                           'abusive_lock_fix_failed': 0,
                           'healthy_lock': 0}
-            if (not yes and
-                    not self.dry_run and
-                    not self.check and
-                    not continue_prompt("Do you really want to repair %s network?" %
-                                        r.fq_name)):
-                raise CommandError("Exiting.")
             try:
                 r.fetch()
             except ResourceNotFound:
                 continue
-            print("Checking VN %s" % r.fq_name)
+            printo("Checking VN %s" % r.fq_name)
             try:
                 api_ips = self.get_api_ip(r)
                 zk_ips = self.get_zk_ip(r)
                 self.check_tuple(api_ips, zk_ips)
                 self.print_stats(r)
             except SubnetNotFound:
-                print("No subnets found")
-                print()
+                printo("No subnets found")
+                printo("")

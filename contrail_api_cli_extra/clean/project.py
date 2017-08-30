@@ -5,12 +5,14 @@ import logging
 from keystoneclient.v2_0 import client as kclient
 from novaclient import client as nclient
 
-from contrail_api_cli.command import Command, Arg, Option, expand_paths
+from contrail_api_cli.command import Command, Option, Arg, expand_paths
 from contrail_api_cli.resource import Collection
 from contrail_api_cli.utils import printo, parallel_map, FQName, continue_prompt
 from contrail_api_cli.exceptions import ChildrenExists, BackRefsExists, ResourceNotFound, CommandError
 from contrail_api_cli.client import HttpError
 from contrail_api_cli.context import Context
+
+from ..utils import ConfirmCommand
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +46,7 @@ class FindOrphanedProjects(Command):
                      workers=50)
 
 
-class PurgeProject(Command):
+class PurgeProject(ConfirmCommand):
     """Command to purge a project. All related resources are deleted.
 
     .. warning::
@@ -68,6 +70,10 @@ class PurgeProject(Command):
     nova_api_version = Option('-v', default="2.1")
     paths = Arg(nargs="+", help="path(s)", metavar='path',
                 complete="resources:project:path")
+
+    @property
+    def confirm_message(self):
+        return "Do you really want to purge theses projects ? All resources will be destroyed !"
 
     def _handle_si_vm(self, iip, vmi):
         # to cleanup SI we need to remove manually the VMs
@@ -117,7 +123,8 @@ class PurgeProject(Command):
         except ResourceNotFound:
             pass
 
-    def __call__(self, paths=None, nova_api_version=None):
+    def __call__(self, paths=None, nova_api_version=None, **kwargs):
+        super(PurgeProject, self).__call__(**kwargs)
         self.nclient = nclient.Client(nova_api_version, session=Context().session)
 
         self.actions = {
@@ -136,7 +143,5 @@ class PurgeProject(Command):
         resources = expand_paths(paths,
                                  predicate=lambda r: r.type == 'project')
 
-        if not continue_prompt("Do you really want to purge theses projects ? All resources will be destroyed !"):
-            return
         for project in resources:
             self._delete(project)

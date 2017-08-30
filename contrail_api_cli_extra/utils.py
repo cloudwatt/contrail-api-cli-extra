@@ -21,6 +21,7 @@ from prettytable import PrettyTable
 from contrail_api_cli.command import Command, Arg, Option, expand_paths
 from contrail_api_cli.exceptions import CommandError
 from contrail_api_cli.resource import Collection
+from contrail_api_cli.utils import continue_prompt
 
 
 def ip_type(string):
@@ -269,3 +270,27 @@ class PathCommand(Command):
             self.resources = expand_paths(paths,
                                           predicate=lambda r: r.type == self.resource_type)
         super(PathCommand, self).__call__(**kwargs)
+
+
+@add_metaclass(abc.ABCMeta)
+class ConfirmCommand(Command):
+    """Inherit from this class for a command that expect a confirmation.
+
+    This will add a --yes flag to skip the confirmation. `self.yes` can
+    be used by the command to show the confirmation or not.
+    """
+    yes = Option('-y', action='store_true', help='Assume yes to all queries and do not prompt')
+
+    @property
+    def confirm_message(self):
+        """Confirmation message to run the command
+        """
+        return "Are you sure ?"
+
+    def __call__(self, yes=None, **kwargs):
+        dry_run = getattr(self, 'dry_run', kwargs.get('dry_run', False))
+        check = getattr(self, 'check', kwargs.get('check', False))
+        if not yes and not dry_run and not check and \
+                not continue_prompt(self.confirm_message):
+            raise CommandError("Exiting.")
+        super(ConfirmCommand, self).__call__(**kwargs)
