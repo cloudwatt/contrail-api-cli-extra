@@ -3,12 +3,11 @@ from __future__ import unicode_literals
 import logging
 
 from keystoneclient.v2_0 import client as kclient
-from novaclient import client as nclient
 
-from contrail_api_cli.command import Command, Option, Arg, expand_paths
+from contrail_api_cli.command import Command, Arg, expand_paths
 from contrail_api_cli.resource import Collection
-from contrail_api_cli.utils import printo, parallel_map, FQName, continue_prompt
-from contrail_api_cli.exceptions import ChildrenExists, BackRefsExists, ResourceNotFound, CommandError
+from contrail_api_cli.utils import printo, parallel_map, FQName
+from contrail_api_cli.exceptions import ChildrenExists, BackRefsExists, ResourceNotFound
 from contrail_api_cli.client import HttpError
 from contrail_api_cli.context import Context
 
@@ -67,7 +66,6 @@ class PurgeProject(ConfirmCommand):
     """
 
     description = "Purge contrail projects"
-    nova_api_version = Option('-v', default="2.1")
     paths = Arg(nargs="+", help="path(s)", metavar='path',
                 complete="resources:project:path")
 
@@ -82,6 +80,7 @@ class PurgeProject(ConfirmCommand):
         iip.fetch()
         for vmi in iip.refs.virtual_machine_interface:
             vmi.fetch()
+            # not a SI
             if 'virtual_machine_interface_properties' not in vmi:
                 continue
             for vm in vmi.refs.virtual_machine_refs:
@@ -90,18 +89,6 @@ class PurgeProject(ConfirmCommand):
                     vm_vmi.remove_ref(vm)
                 self._delete(vm)
         self._delete(iip)
-
-    def _remove_vm(self, vmi, parent):
-        logger.debug("trying to remove vmi vms")
-        # VMs are not linked to the project
-        vmi.fetch()
-        for vm in vmi.refs.virtual_machine:
-            if continue_prompt("Nova VM %s will be deleted" % vm.uuid):
-                printo("deleting nova VM %s" % vm.uuid)
-                self.nclient.servers.delete(vm.uuid)
-            else:
-                raise CommandError("Exiting.")
-        self._delete(vmi)
 
     def _remove_back_ref(self, resource, parent):
         printo("remove back ref from %s to %s" %
@@ -123,21 +110,14 @@ class PurgeProject(ConfirmCommand):
         except ResourceNotFound:
             pass
 
-    def __call__(self, paths=None, nova_api_version=None, **kwargs):
+    def __call__(self, paths=None, **kwargs):
         super(PurgeProject, self).__call__(**kwargs)
-        self.nclient = nclient.Client(nova_api_version, session=Context().session)
-
         self.actions = {
             BackRefsExists: {
                 # we don't want to delete virtual-router objects
                 ('virtual-machine', 'virtual-router'): self._remove_back_ref,
                 ('virtual-machine-interface', 'instance-ip'): self._handle_si_vm,
-                ('virtual-network', 'virtual-machine-interface'): self._remove_vm,
-                ('security-group', 'virtual-machine-interface'): self._remove_vm,
             },
-            ChildrenExists: {
-                ('project', 'virtual-machine-interface'): self._remove_vm,
-            }
         }
 
         resources = expand_paths(paths,

@@ -7,7 +7,6 @@ install_requires = [
     'kazoo',
     'networkx',
     'pydotplus',
-    'python-novaclient',
     'python-keystoneclient',
     'PrettyTable'
 ]
