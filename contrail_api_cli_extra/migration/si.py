@@ -13,7 +13,6 @@ from contrail_api_cli.schema import require_schema
 from ..utils import CheckCommand
 
 
-@require_schema(version='1.10')
 class MigrateSI110221(CheckCommand):
     """Migration command for SI from 1.10 version to 2.21 version
     """
@@ -155,6 +154,7 @@ class MigrateSI110221(CheckCommand):
             self._delete_res(old_si)
             self._add_back_ref(new_si, si_target)
 
+    @require_schema(version='1.10')
     def __call__(self, paths=None, **kwargs):
         super(MigrateSI110221, self).__call__(**kwargs)
         if not paths:

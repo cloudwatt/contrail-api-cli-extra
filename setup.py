@@ -84,6 +84,7 @@ setup(
             'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
             'migrate-host-routes = contrail_api_cli_extra.migration.host_routes:MigrateHostRoutes',
             'migrate-rt = contrail_api_cli_extra.migration.rt:MigrateRT22132',
+            'migrate-lb = contrail_api_cli_extra.migration.lb:MigrateLB22132',
         ],
         'contrail_api_cli.clean': [
             'purge-project = contrail_api_cli_extra.clean.project:PurgeProject',
