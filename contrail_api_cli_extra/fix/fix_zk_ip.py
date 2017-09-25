@@ -4,6 +4,7 @@ from six import text_type
 import logging
 from collections import namedtuple
 
+import kazoo
 from netaddr import IPNetwork, IPAddress, AddrFormatError
 
 from contrail_api_cli.exceptions import CommandError, ResourceNotFound
@@ -19,6 +20,13 @@ Subnet = namedtuple('Subnet', ['cidr', 'gateway', 'dns'])
 class SubnetNotFound(Exception):
     pass
 
+class ZkNodeNotFound(Exception):
+    def __init__(self, zk_subnets):
+        self.zk_subnets = zk_subnets
+
+    def __str__(self):
+        output = ["Node {0} do not exist in Zookeeper".format(str(subnet)) for subnet in self.zk_subnets]
+        return "\n".join(output)
 
 class UnhandledResourceType(Exception):
     pass
@@ -103,10 +111,16 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand, ConfirmCommand):
     def get_zk_ip(self, vn):
         zk_ips = {}
         subnets = self._get_vn_subnets(vn)
+        zk_subnets_err = []
 
         for s in subnets:
             zk_subnet_req = self._zk_node_for_subnet(vn.fq_name, s)
-            for ip in self.zk_client.get_children(zk_subnet_req):
+            try:
+                children = self.zk_client.get_children(zk_subnet_req)
+            except kazoo.exceptions.NoNodeError:
+                zk_subnets_err.append(zk_subnet_req)
+                continue
+            for ip in children:
                 try:
                     zk_ip = IPAddress(int(ip))
                 except AddrFormatError:
@@ -127,7 +141,8 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand, ConfirmCommand):
                     printo(msg)
                     continue
                 zk_ips[zk_ip] = zk_subnet_req + '/' + text_type(int(zk_ip)).zfill(10)
-
+        if zk_subnets_err:
+            raise ZkNodeNotFound(zk_subnets_err)
         return zk_ips
 
     def get_api_ip(self, vn):
@@ -332,3 +347,6 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand, ConfirmCommand):
             except SubnetNotFound:
                 printo("No subnets found")
                 printo("")
+            except ZkNodeNotFound as exc:
+                msg = str(exc)
+                printo(msg)
