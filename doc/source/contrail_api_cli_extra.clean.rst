@@ -34,4 +34,11 @@ contrail_api_cli_extra.clean.si module
     :members:
     :show-inheritance:
 
+contrail_api_cli_extra.clean.subnet module
+------------------------------------------
+
+.. automodule:: contrail_api_cli_extra.clean.subnet
+    :members:
+    :show-inheritance:
+
 

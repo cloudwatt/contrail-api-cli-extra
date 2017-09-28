@@ -34,4 +34,11 @@ contrail_api_cli_extra.fix.fix_vn_id module
     :members:
     :show-inheritance:
 
+contrail_api_cli_extra.fix.fix_zk_ip module
+-------------------------------------------
+
+.. automodule:: contrail_api_cli_extra.fix.fix_zk_ip
+    :members:
+    :show-inheritance:
+
 

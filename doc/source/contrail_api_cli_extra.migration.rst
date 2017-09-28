@@ -13,6 +13,20 @@ contrail_api_cli_extra.migration.host_routes module
     :members:
     :show-inheritance:
 
+contrail_api_cli_extra.migration.lb module
+------------------------------------------
+
+.. automodule:: contrail_api_cli_extra.migration.lb
+    :members:
+    :show-inheritance:
+
+contrail_api_cli_extra.migration.rt module
+------------------------------------------
+
+.. automodule:: contrail_api_cli_extra.migration.rt
+    :members:
+    :show-inheritance:
+
 contrail_api_cli_extra.migration.si module
 ------------------------------------------
 
