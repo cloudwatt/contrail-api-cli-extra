@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import logging
 
-from contrail_api_cli.command import Command
 from contrail_api_cli.context import Context
 from contrail_api_cli.resource import Resource
 from contrail_api_cli.utils import printo, continue_prompt
@@ -11,7 +9,7 @@ from ..utils import CheckCommand
 
 
 class CleanSubnet(CheckCommand):
-    """Command to purge a project. All related resources are deleted.
+    """Command to fix subnets KV store.
 
     This command works by first retrieving all the KV store, then it
     builds a dict which tends to reproduce a clean KV store based on
