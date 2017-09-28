@@ -108,20 +108,22 @@ def format_row(header, widths, row):
 
 
 def format_table_ascii_delimiters(header, widths, data):
-    """ format_table_ascii_delimiters: return ascii table with delimitation and lines
-        wrapped.
+    """
+    Return ascii table with delimitation and lines wrapped.
 
-        Usage:
+    usage::
 
         header = ["name", "age", "job", "bag"]
         widths = [20, 4, 10, 40]
-        data = [["foo", 54, "policeman", ("pen", "knife", "glasses")],
-               ["bar", 28, "fireman", ("socket", "hat")],
-                       ["joe", 36, "anthropologist", ("computer", "keyboard")]]
+        data = [
+                 ["foo", 54, "policeman", ("pen", "knife", "glasses")],
+                 ["bar", 28, "fireman", ("socket", "hat")],
+                 ["joe", 36, "anthropologist", ("computer", "keyboard")]
+               ]
 
         format_table2(header, widths, data)
 
-        Return:
+    return::
 
         +------+-----+------------+------------+
         | name | age | job        | bag        |
@@ -137,6 +139,7 @@ def format_table_ascii_delimiters(header, widths, data):
         |      |     | gist       | - keyboard |
         |      |     |            |            |
         +------+-----+------------+------------+
+
     """
     table = PrettyTable()
     table.field_names = header
