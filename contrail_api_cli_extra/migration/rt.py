@@ -22,7 +22,7 @@ class MigrateRT22132(CheckCommand, PathCommand):
     def resource_type(self):
         return 'route-target'
 
-    @require_schema(version='2.21')
+    @require_schema(version='3.2')
     def __call__(self, **kwargs):
         super(MigrateRT22132, self).__call__(**kwargs)
 
