@@ -7,6 +7,7 @@ from six import text_type
 
 from contrail_api_cli.command import Arg, expand_paths
 from contrail_api_cli.utils import printo
+from contrail_api_cli.exceptions import ResourceNotFound
 
 from contrail_api_cli_extra.utils import CheckCommand
 
@@ -47,7 +48,11 @@ class RescheduleVM(CheckCommand):
         vms = []
         src.fetch()
         for vm in src.refs.virtual_machine:
-            vm.fetch()
+            try:
+                vm.fetch()
+            except ResourceNotFound:
+                printo("virtual-machine/%s not found" % vm["uuid"])
+                continue
             if vm.refs.service_instance:
                 vms.append((0, vm))
 
