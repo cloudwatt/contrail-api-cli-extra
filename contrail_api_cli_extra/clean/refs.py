@@ -17,18 +17,18 @@ class CleanRefs(CheckCommand):
     The command expects a list of ids where the first ID is a valid resource
     while the second is a missing resource still referenced.
 
-    For example:
+    For example::
 
         > g.V().hasLabel('routing_instance').not(has('_missing')).in().hasLabel('virtual_machine_interface').has('_missing').path().by(id).unfold().fold()
         [ri_id, vmi_id, ri_id, vmi_id, ...]
 
     This return a list of broken refs between RIs and VMIs where VMIs don't exists or are incomplete.
 
-    We can clean then by running:
+    We can clean then by running::
 
         contrail-api-cli --ns contrail_api_cli.clean clean-refs --ref-type backref --target-type virtual_machine_interface ri_id vmi_id ri_id vmi_id ...
 
-    Other examples:
+    Other examples::
 
         # RIs without any parent VN
         > g.V().hasLabel('routing_instance').not(has('_missing')).out('parent').hasLabel('virtual_network').has('_missing').path().by(id).unfold().fold()
