@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from sys import exit
+import argparse
 
 from pycassa import ConnectionPool, ColumnFamily
 
@@ -28,6 +30,10 @@ class CleanRefs(CheckCommand):
 
         contrail-api-cli --ns contrail_api_cli.clean clean-refs --ref-type backref --target-type virtual_machine_interface ri_id vmi_id ri_id vmi_id ...
 
+    Or directly from a file::
+
+         contrail-api-cli --ns contrail_api_cli.clean clean-refs --ref-type backref --target-type virtual_machine_interface --resources-file file
+
     Other examples::
 
         # RIs without any parent VN
@@ -42,6 +48,9 @@ class CleanRefs(CheckCommand):
     description = "Clean for broken references"
     paths = Arg(help="list of refs [src, tgt, src, tgt, ...]",
                 nargs="*", default=[])
+    resources_file = Option(help="file containing resource ids",
+                            nargs="?",
+                            type=argparse.FileType('r'))
     ref_type = Option(help="ref type to clean",
                       choices=["ref", "backref", "children", "parent"],
                       required=True)
@@ -69,10 +78,19 @@ class CleanRefs(CheckCommand):
         printo("[%s -> %s] deleted" % (source, target))
         self._remove_refs(paths[2:])
 
-    def __call__(self, paths=None, ref_type=None, target_type=None, cassandra_servers=None, **kwargs):
+    def _read_file(self, resources_file):
+        paths = []
+        for l in resources_file:
+            paths = paths + l.split()
+        return paths
+
+    def __call__(self, paths=None, resources_file=None, ref_type=None, target_type=None, cassandra_servers=None, **kwargs):
         super(CleanRefs, self).__call__(**kwargs)
         pool = ConnectionPool('config_db_uuid', server_list=cassandra_servers)
         self.uuid_cf = ColumnFamily(pool, 'obj_uuid_table')
         self.ref_type = ref_type
         self.target_type = target_type
+        if resources_file is not None :
+            paths = paths + self._read_file(resources_file)
+
         self._remove_refs(paths)
