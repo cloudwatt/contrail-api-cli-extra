@@ -68,15 +68,18 @@ class CleanRefs(CheckCommand):
         source, target = paths[:2]
         # when the parent doesn't exists anymore,
         # we don't need to keep the source
-        if self.ref_type == "parent":
-            self.uuid_cf.remove(target)
-            self.uuid_cf.remove(source)
-        else:
-            self.uuid_cf.remove(target)
-            self.uuid_cf.remove(source, columns=['%s:%s:%s' % (self.ref_type, self.target_type, target)])
+        if not self.check:
+            if self.ref_type == "parent":
+                self.uuid_cf.remove(target)
+                self.uuid_cf.remove(source)
+            else:
+                self.uuid_cf.remove(target)
+                self.uuid_cf.remove(source, columns=['%s:%s:%s' % (self.ref_type, self.target_type, target)])
 
         printo("[%s -> %s] deleted" % (source, target))
-        self._remove_refs(paths[2:])
+
+        if not self.check:
+            self._remove_refs(paths[2:])
 
     def _read_file(self, resources_file):
         paths = []
