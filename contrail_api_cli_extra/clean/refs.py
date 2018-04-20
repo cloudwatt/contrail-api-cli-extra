@@ -77,9 +77,7 @@ class CleanRefs(CheckCommand):
                 self.uuid_cf.remove(source, columns=['%s:%s:%s' % (self.ref_type, self.target_type, target)])
 
         printo("[%s -> %s] deleted" % (source, target))
-
-        if not self.check:
-            self._remove_refs(paths[2:])
+        self._remove_refs(paths[2:])
 
     def _read_file(self, resources_file):
         paths = []
