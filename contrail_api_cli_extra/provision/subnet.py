@@ -9,23 +9,10 @@ from contrail_api_cli.resource import Resource
 from contrail_api_cli.exceptions import ResourceNotFound
 
 from ..utils import network_type
+from common import get_network_ipam_subnets
 
 
-class Subnet(Command):
-    def _get_network_ipam_subnets(self, vn=None):
-        if 'network_ipam_refs' not in vn:
-            ipam_ref = {
-                "attr": {
-                    "ipam_subnets": []
-                },
-                "to": ["default-domain", "default-project", "default-network-ipam"]
-            }
-            vn['network_ipam_refs'] = []
-            vn['network_ipam_refs'].append(ipam_ref)
-        return vn['network_ipam_refs'][0]['attr']['ipam_subnets']
-
-
-class SetSubnets(Subnet):
+class SetSubnets(Command):
     description = 'Set subnets to virtual-network'
     virtual_network_fqname = Option(required=True,
                                     help='VN fqname (eg: default-domain:admin:net)')
@@ -40,7 +27,7 @@ class SetSubnets(Subnet):
                       fetch=True)
 
         cidrs = [netaddr.IPNetwork(cidr) for cidr in cidrs]
-        ipam_subnets = self._get_network_ipam_subnets(vn)
+        ipam_subnets = get_network_ipam_subnets(vn)
         ipam_subnets_current = [{
             'subnet': {
                 'ip_prefix': s['subnet']['ip_prefix'],
@@ -67,7 +54,7 @@ class SetSubnets(Subnet):
             vn.save()
 
 
-class GetSubnets(Subnet):
+class GetSubnets(Command):
     description = 'Get virtual-network subnets'
     virtual_network_fqnames = Option(nargs='+',
                                      required=True,
@@ -80,7 +67,7 @@ class GetSubnets(Subnet):
                 vn = Resource('virtual-network',
                               fq_name=virtual_network_fqname,
                               fetch=True)
-                ipam_subnets = self._get_network_ipam_subnets(vn)
+                ipam_subnets = get_network_ipam_subnets(vn)
                 if ipam_subnets:
                     res.append({'virtual_network_fqname': virtual_network_fqname,
                                 'cidrs': ['%s/%s' % (s['subnet']['ip_prefix'], s['subnet']['ip_prefix_len'])
