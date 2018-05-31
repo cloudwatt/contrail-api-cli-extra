@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from six import text_type
 import json
+
+import netaddr
 
 from contrail_api_cli.command import Command, Arg, Option
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.exceptions import ResourceNotFound
 from contrail_api_cli.utils import FQName
+
+from common import get_network_ipam_subnets
 
 
 class VN(Command):
@@ -24,8 +29,13 @@ class AddVN(VNAction):
                       action="store_true")
     shared = Option(default=False,
                     action="store_true")
+    subnet = Option(action="append",
+                    dest="subnets",
+                    metavar="CIDR",
+                    default=[],
+                    help="Add subnet to VN")
 
-    def __call__(self, project_fqname=None, virtual_network_name=None, external=False, shared=False):
+    def __call__(self, project_fqname=None, virtual_network_name=None, external=False, shared=False, subnets=None):
         vn_fqname = '%s:%s' % (project_fqname, virtual_network_name)
 
         # fetch project to sync it from keystone if not already there
@@ -43,6 +53,33 @@ class AddVN(VNAction):
                                 parent_type='virtual-network',
                                 parent_uuid=vn.uuid)
             fip_pool.save()
+
+        cidrs = [netaddr.IPNetwork(cidr) for cidr in subnets]
+        ipam_subnets = get_network_ipam_subnets(vn)
+        ipam_subnets_current = [{
+            'subnet': {
+                'ip_prefix': s['subnet']['ip_prefix'],
+                'ip_prefix_len': s['subnet']['ip_prefix_len']
+            }
+        } for s in ipam_subnets]
+        ipam_subnets_wanted = [{
+            'subnet': {
+                'ip_prefix': text_type(c.network),
+                'ip_prefix_len': c.prefixlen
+            }
+        } for c in cidrs]
+
+        modified = False
+        for idx, subnet in enumerate(ipam_subnets_current):
+            if subnet not in ipam_subnets_wanted:
+                del ipam_subnets[idx]
+                modified = True
+        for subnet in ipam_subnets_wanted:
+            if subnet not in ipam_subnets_current:
+                ipam_subnets.append(subnet)
+                modified = True
+        if modified:
+            vn.save()
 
 
 class DelVN(VNAction):
@@ -78,4 +115,6 @@ class ListVNs(VN):
             "project_fqname": str(FQName(vn.fq_name[0:-1])),
             "shared": vn.get('is_shared', False),
             "external": vn.get('router_external', False),
+            "subnets": ['%s/%s' % (s['subnet']['ip_prefix'], s['subnet']['ip_prefix_len'])
+                        for s in get_network_ipam_subnets(vn)]
         } for vn in vns], indent=2)
