@@ -422,6 +422,8 @@ class Provision(Command):
                 continue
             if isinstance(action, argparse._StoreConstAction):
                 values[action.dest] = values.get(action.dest, action.default)
+            elif isinstance(action, argparse._AppendAction):
+                values[action.dest] = values.get(action.dest, action.default)
             else:
                 arg_strings = values.get(action.dest, [])
                 if type(arg_strings) != list:
