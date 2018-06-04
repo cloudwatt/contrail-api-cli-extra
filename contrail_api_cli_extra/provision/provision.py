@@ -425,7 +425,7 @@ class Provision(Command):
             elif isinstance(action, argparse._AppendAction):
                 values[action.dest] = values.get(action.dest, action.default)
             else:
-                arg_strings = values.get(action.dest, [])
+                arg_strings = values.get(action.dest, [''])
                 if type(arg_strings) != list:
                     arg_strings = [arg_strings]
                 try:

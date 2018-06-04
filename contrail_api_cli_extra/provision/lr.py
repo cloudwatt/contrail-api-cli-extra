@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 import json
 import uuid
 
-from keystoneauth1.exceptions.http import Conflict
-
 from contrail_api_cli.command import Command, Option, Arg
 from contrail_api_cli.resource import Resource, Collection
 from contrail_api_cli.utils import FQName, printo
@@ -28,8 +26,10 @@ class AddLR(LRAction):
                        dest='vn_fqnames',
                        default=[],
                        help='Virtual network fqnames to connect the LR to')
+    external_vn_fqname = Option(help='Connect router to external network',
+                                type=str)
 
-    def __call__(self, project_fqname=None, logical_router_name=None, vn_fqnames=None):
+    def __call__(self, project_fqname=None, logical_router_name=None, vn_fqnames=None, external_vn_fqname=None):
         lr_fqname = '%s:%s' % (project_fqname, logical_router_name)
 
         # fetch project to sync it from keystone if not already there
@@ -75,6 +75,18 @@ class AddLR(LRAction):
             lr.set_ref(vmi)
             lr.save()
 
+        if external_vn_fqname:
+            try:
+                vn = Resource('virtual-network', fq_name=external_vn_fqname, fetch=True)
+            except ResourceNotFound:
+                printo("VN %s not found, ignoring..." % external_vn_fqname)
+                return
+            if not vn.get('router_external', False):
+                printo("VN %s is not an external network, ignoring..." % external_vn_fqname)
+                return
+            lr.set_ref(vn)
+            lr.save()
+
 
 class DelLR(LRAction):
     description = 'Delete logical-router'
@@ -82,6 +94,9 @@ class DelLR(LRAction):
     def __call__(self, project_fqname=None, logical_router_name=None, **kwargs):
         lr_fqname = '%s:%s' % (project_fqname, logical_router_name)
         lr = Resource('logical-router', fq_name=lr_fqname, fetch=True)
+        for vn in lr.refs.virtual_network:
+            lr.remove_ref(vn)
+            lr.save()
         for vmi in lr.refs.virtual_machine_interface:
             for iip in vmi.fetch().back_refs.instance_ip:
                 iip.delete()
@@ -104,4 +119,5 @@ class ListLRs(LR):
             "logical_router_name": str(lr.fq_name[-1]),
             "vn_fqnames": [str(vn.fq_name) for vmi in lr.refs.virtual_machine_interface
                            for vn in vmi.fetch().refs.virtual_network],
+            "external_vn_fqname": "".join([str(vn.fq_name) for vn in lr.refs.virtual_network]),
         } for lr in lrs], indent=2)
