@@ -50,7 +50,13 @@ class ListVRouter(Command):
     def __call__(self):
         vrouters = Collection('virtual-router',
                               fetch=True, recursive=2)
-        return json.dumps([{'vrouter_name': vrouter.fq_name[-1],
-                            'vrouter_ip': vrouter['virtual_router_ip_address'],
-                            'vrouter_type': vrouter.get('virtual_router_type', [])}
-                           for vrouter in vrouters], indent=2)
+
+        vrouter_info_list = []
+        for vrouter in vrouters:
+            vrouter_info = {'vrouter_name': vrouter.fq_name[-1],
+                            'vrouter_ip': vrouter['virtual_router_ip_address']}
+            if vrouter.get('virtual_router_type'):
+                vrouter_info['vrouter_type'] = vrouter.get('virtual_router_type')
+            vrouter_info_list.append(vrouter_info)
+
+        return json.dumps(vrouter_info_list, indent=2)

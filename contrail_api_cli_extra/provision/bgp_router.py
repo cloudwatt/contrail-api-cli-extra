@@ -30,11 +30,10 @@ class AddBGPRouter(BGPRouter):
                          help="BGP router type ('contrail' for Contrail control \
                                nodes and '<WHATEVER>' for non Contrail BGP \
                                routers) (default: %(default)s)")
-    router_address_families = Option(nargs='+',
-                                     help="Address family list \
-                                           (default: %(default)s)",
-                                     choices=ADDRESS_FAMILIES,
-                                     default=ADDRESS_FAMILIES)
+    router_address_family = Option(action="append",
+                                   help="Add address family support",
+                                   dest="router_address_families",
+                                   choices=ADDRESS_FAMILIES)
     router_md5 = Option(default=None, type=md5_type,
                         help="MD5 authentication (default: %(default)s)")
 
@@ -120,13 +119,16 @@ class ListBGPRouter(Command):
     def __call__(self):
         routers = Collection('bgp-router',
                              fetch=True, recursive=2)
-        return json.dumps([{'router_name': router.fq_name[-1],
-                            'router_ip': router['bgp_router_parameters']['address'],
-                            'router_port': router['bgp_router_parameters']['port'],
-                            'router_asn': router['bgp_router_parameters']['autonomous_system'],
-                            'router_type': router['bgp_router_parameters']['vendor'],
-                            'router_address_families': router['bgp_router_parameters']['address_families']['family'],
-                            'router_md5': router['bgp_router_parameters']['auth_data']['key_items'][0]['key']
-                                          if 'auth_data' in router['bgp_router_parameters']
-                                          and router['bgp_router_parameters']['auth_data'] else []}
-                          for router in routers], indent=2)
+        router_info_list = []
+        for router in routers:
+            router_info = {'router_name': router.fq_name[-1],
+                           'router_ip': router['bgp_router_parameters']['address'],
+                           'router_port': router['bgp_router_parameters']['port'],
+                           'router_asn': router['bgp_router_parameters']['autonomous_system'],
+                           'router_type': router['bgp_router_parameters']['vendor'],
+                           'router_address_families': router['bgp_router_parameters']['address_families']['family']}
+            if 'auth_data' in router['bgp_router_parameters'] \
+                    and router['bgp_router_parameters']['auth_data']:
+                router_info['router_md5'] = router['bgp_router_parameters']['auth_data']['key_items'][0]['key']
+            router_info_list.append(router_info)
+        return json.dumps(router_info_list, indent=2)

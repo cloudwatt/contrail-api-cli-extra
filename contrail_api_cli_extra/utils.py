@@ -175,7 +175,7 @@ class RouteTargetAction(argparse.Action):
     @staticmethod
     def route_target_type(value):
         try:
-            asn, rt_num = value.split(':')
+            _, asn, rt_num = value.split(':')
         except ValueError:
             raise argparse.ArgumentTypeError("A router target must be composed by an ASN and a number separated by the ':' character")
 

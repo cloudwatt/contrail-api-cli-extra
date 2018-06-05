@@ -416,31 +416,46 @@ class Provision(Command):
         """
         cmd = self._get_add_command(key)
 
-        # default args values from argparse parser
-        for action in cmd.parser._actions:
-            if action.dest == 'help':
-                continue
-            if isinstance(action, argparse._StoreConstAction):
-                values[action.dest] = values.get(action.dest, action.default)
-            elif isinstance(action, argparse._AppendAction):
-                values[action.dest] = values.get(action.dest, action.default)
-            else:
-                arg_strings = values.get(action.dest, [''])
-                if type(arg_strings) != list:
-                    arg_strings = [arg_strings]
-                try:
-                    values[action.dest] = cmd.parser._get_values(action, arg_strings)
-                    if not values[action.dest] and action.default:
-                        values[action.dest] = action.default
-                except argparse.ArgumentError as e:
-                    raise CommandError('Error in %s: %s' % (key, text_type(e)))
-
-        # remove unknown args from call
-        for arg, value in copy.deepcopy(values.items()):
+        for arg, value in values.items():
             if arg not in self._get_command_args(cmd):
                 logger.debug('Unknown arg %s for %s. Ignored' % (arg, cmd.__call__))
-                del values[arg]
-        return values
+
+        # build cmd line to pass it to argparse for validation
+        cmd_line = []
+        for k, v in values.items():
+            for option_name, option in cmd.options.items():
+                if k == option.dest:
+                    if option.need_value:
+                        if isinstance(v, list):
+                            if option.kwargs.get('action') == 'append':
+                                for i in v:
+                                    cmd_line.append(option.long_name)
+                                    cmd_line.append(text_type(i))
+                            else:
+                                cmd_line.append(option.long_name)
+                                for i in v:
+                                    cmd_line.append(text_type(i))
+                        else:
+                            cmd_line.append(option.long_name)
+                            cmd_line.append(text_type(v))
+                    else:
+                        cmd_line.append(option.long_name)
+                    break
+        for k, v in values.items():
+            for arg_name, arg in cmd.args.items():
+                if k == arg.dest:
+                    if isinstance(v, list):
+                        cmd_line += v
+                    else:
+                        cmd_line.append(text_type(v))
+                    break
+
+        try:
+            args = cmd.parser.parse_args(args=cmd_line)
+        except Exception as e:
+            import pdb
+            pdb.set_trace()
+        return vars(args)
 
     def _diff_envs(self, current, wanted):
         """Make a diff of the current env and the wanted env.
@@ -466,7 +481,7 @@ class Provision(Command):
                     diff_env[Actions.SET][key] = add_values
                 else:
                     diff_env[Actions.ADD][key] = add_values
-        for key, values in current.items():
+        for key, values in reversed(current.items()):
             if key not in wanted:
                 continue
             if self._is_property(key):

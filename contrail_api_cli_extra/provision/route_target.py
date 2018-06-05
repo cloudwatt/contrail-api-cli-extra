@@ -55,7 +55,7 @@ class SetRouteTargets(RouteTargetAction):
             input_rt_list = eval(rt_policy)
             if not input_rt_list:
                 continue
-            if not rt_policy in self.vn:
+            if rt_policy not in self.vn:
                 self.vn[rt_policy] = {}
             self.vn[rt_policy]['route_target'] = input_rt_list
             modified = True
@@ -74,8 +74,6 @@ class GetRouteTargets(RouteTarget):
             for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
                 if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
                     result[rt_policy] = self.vn[rt_policy]['route_target']
-                else:
-                    result[rt_policy] = []
             if result:
                 return json.dumps(result, indent=2)
         except ResourceNotFound:
