@@ -80,6 +80,7 @@ setup(
             'fix-fip-locks = contrail_api_cli_extra.fix.fix_fip_locks:FixFIPLocks',
             'fix-subnets = contrail_api_cli_extra.fix.fix_subnets:FixSubnets',
             'fix-zk-ip = contrail_api_cli_extra.fix.fix_zk_ip:FixZkIP',
+            'fix-ri = contrail_api_cli_extra.fix.ri:FixRI',
             'check-bad-refs = contrail_api_cli_extra.misc.check_bad_refs:CheckBadRefs',
             'manage-rt = contrail_api_cli_extra.misc.manage_rt:ManageRT',
         ],
