@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from six import text_type
-from itertools import count, izip
 
 from contrail_api_cli.utils import printo, FQName
 from contrail_api_cli.exceptions import ResourceNotFound
@@ -35,11 +34,7 @@ class FixRI(CheckCommand, ZKCommand, PathCommand):
         self._rt_ids.sort()
 
     def _get_free_rt_id(self):
-        free_ids = (b for a, b in izip(self._rt_ids, count(8000000)) if a != b)
-        try:
-            rt_id = free_ids.next()
-        except StopIteration:
-            rt_id = self._rt_ids[len(self._rt_ids)] + 1
+        rt_id = self._rt_ids[-1] + 1
         if self.zk_client.exists('/id/bgp/route-targets/%010d' % rt_id):
             self._refresh_rt_ids()
             return self._get_free_rt_id()
@@ -57,7 +52,7 @@ class FixRI(CheckCommand, ZKCommand, PathCommand):
             fq_name = self._lock_rt_id()
             rt = Resource('route-target', fq_name=[fq_name])
             rt.save()
-            ri.add_ref(rt)
+            ri.add_ref(rt, attr={'import_export': None})
             self.log("Added RT %s (%s) to RI %s" % (rt.path, rt.fq_name, ri.path), ri)
 
     def _check_ri(self, ri):
