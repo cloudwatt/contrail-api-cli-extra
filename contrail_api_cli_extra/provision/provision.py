@@ -439,7 +439,10 @@ class Provision(Command):
                             cmd_line.append(option.long_name)
                             cmd_line.append(text_type(v))
                     else:
-                        cmd_line.append(option.long_name)
+                        if option.kwargs['action'] == 'store_true' and v is True:
+                            cmd_line.append(option.long_name)
+                        if option.kwargs['action'] == 'store_false' and v is False:
+                            cmd_line.append(option.long_name)
                     break
         for k, v in values.items():
             for arg_name, arg in cmd.args.items():
