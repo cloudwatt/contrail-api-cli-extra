@@ -452,7 +452,7 @@ class Provision(Command):
 
         try:
             args = cmd.parser.parse_args(args=cmd_line)
-        except Exception as e:
+        except Exception:
             import pdb
             pdb.set_trace()
         return vars(args)
@@ -518,8 +518,15 @@ class Provision(Command):
         properties, finally add wanted resources.
         """
         for action in Actions.APPLY:
+            run_list = []
             for key, values in diff.get(action, {}).items():
                 cmd = self._get_command(key, action)
+                run_list.append((cmd, values))
+            # sort run_list based on cmd order
+            run_list = sorted(run_list, key=lambda action: action[0].order if hasattr(action[0], "order") else 1000)
+            if action == Actions.DEL:
+                run_list.reverse()
+            for (cmd, values) in run_list:
                 for kwargs in values:
                     try:
                         self._call_command(cmd, defaults=kwargs)

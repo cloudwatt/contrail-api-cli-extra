@@ -14,6 +14,7 @@ from common import get_network_ipam_subnets
 
 
 class VN(Command):
+    order = 100
     project_fqname = Option(required=True,
                             dest='project_fqname',
                             help='Project fqname (eg: default-domain:admin)')
