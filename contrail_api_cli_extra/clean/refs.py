@@ -8,10 +8,10 @@ from pycassa import ConnectionPool, ColumnFamily
 from contrail_api_cli.command import Option, Arg
 from contrail_api_cli.utils import printo
 
-from ..utils import server_type, CheckCommand
+from ..utils import server_type, CheckCommand, CassandraCommand
 
 
-class CleanRefs(CheckCommand):
+class CleanRefs(CheckCommand, CassandraCommand):
     """Clean references in Contrail DB.
 
     Broken refs can be found with gremlin.
@@ -57,18 +57,13 @@ class CleanRefs(CheckCommand):
     target_type = Option(help="resource type of the target",
                          required=True)
 
-    cassandra_servers = Option(help="cassandra server list' (default: %(default)s)",
-                               nargs='+',
-                               type=server_type,
-                               default=['localhost:9160'])
-
     def _remove_refs(self, paths):
         if len(paths) == 0:
             return
         source, target = paths[:2]
         # when the parent doesn't exists anymore,
         # we don't need to keep the source
-        if not self.check:
+        if not self.check and not self.dry_run:
             if self.ref_type == "parent":
                 self.uuid_cf.remove(target)
                 self.uuid_cf.remove(source)
@@ -85,9 +80,9 @@ class CleanRefs(CheckCommand):
             paths = paths + l.split()
         return paths
 
-    def __call__(self, paths=None, resources_file=None, ref_type=None, target_type=None, cassandra_servers=None, **kwargs):
+    def __call__(self, paths=None, resources_file=None, ref_type=None, target_type=None, **kwargs):
         super(CleanRefs, self).__call__(**kwargs)
-        pool = ConnectionPool('config_db_uuid', server_list=cassandra_servers)
+        pool = ConnectionPool('config_db_uuid', server_list=self.cassandra_servers)
         self.uuid_cf = ColumnFamily(pool, 'obj_uuid_table')
         self.ref_type = ref_type
         self.target_type = target_type
