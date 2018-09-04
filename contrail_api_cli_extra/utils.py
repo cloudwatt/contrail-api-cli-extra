@@ -220,6 +220,21 @@ class ZKCommand(Command):
         super(ZKCommand, self).__call__(**kwargs)
 
 
+class CassandraCommand(Command):
+    """Inherit from this class to add `--cassandra-servers` options.
+
+    Cassandra servers list value is stored in `self.cassandra_servers`.
+    """
+    cassandra_servers = Option(help="cassandra server list' (default: %(default)s)",
+                               nargs='+',
+                               type=server_type,
+                               default=['localhost:9160'])
+
+    def __call__(self, cassandra_servers=None, **kwargs):
+        self.cassandra_servers = cassandra_servers
+        super(CassandraCommand, self).__call__(**kwargs)
+
+
 class CheckCommand(Command):
     """Inherit from this class to add `--check` and `--dry-run` options.
 
