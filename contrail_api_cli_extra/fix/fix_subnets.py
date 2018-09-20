@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from contrail_api_cli.client import HttpError
 from contrail_api_cli.resource import Resource
+from contrail_api_cli.schema import require_schema
 from contrail_api_cli.utils import printo, parallel_map
 from contrail_api_cli.command import Arg
 from contrail_api_cli.context import Context
@@ -36,6 +37,10 @@ class FixSubnets(CheckCommand):
     Or to fix a particular subnet run::
 
         contrail-api-cli fix-subnets <subnet_uuid> [--dry-run]
+
+    The version of the schema is required for this command::
+
+        contrail-api-cli --schema-version 3.2 fix-subnets
     """
     description = "Fix subnets key-value store entries"
     subnet_uuid = Arg(nargs="?", help="subnet uuid to fix")
@@ -56,11 +61,12 @@ class FixSubnets(CheckCommand):
         except HttpError:
             printo('Missing key %s for subnet %s' % (subnet_uuid, subnet_uuid))
             to_add.append((subnet_uuid, subnet_key))
-        try:
-            self.session.search_kv_store(subnet_key)
-        except HttpError:
-            printo('Missing key %s for subnet %s' % (subnet_key, subnet_uuid))
-            to_add.append((subnet_key, subnet_uuid))
+        if self.schema_version < "3.2" :
+            try:
+                self.session.search_kv_store(subnet_key)
+            except HttpError:
+                printo('Missing key %s for subnet %s' % (subnet_key, subnet_uuid))
+                to_add.append((subnet_key, subnet_uuid))
         return to_add
 
     def fix(self, to_add):
@@ -69,10 +75,12 @@ class FixSubnets(CheckCommand):
             if not self.dry_run:
                 self.session.add_kv_store(key, value)
 
+    @require_schema()
     def __call__(self, subnet_uuid=None, **kwargs):
         super(FixSubnets, self).__call__(**kwargs)
 
         self.session = Context().session
+        self.schema_version = Context().schema.version
         self.subnet_uuid = subnet_uuid
 
         ipam = Resource('network-ipam',
