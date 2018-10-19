@@ -53,8 +53,6 @@ class SetRouteTargets(RouteTargetAction):
         modified = False
         for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
             input_rt_list = eval(rt_policy)
-            if not input_rt_list:
-                continue
             if rt_policy not in self.vn:
                 self.vn[rt_policy] = {}
             self.vn[rt_policy]['route_target'] = input_rt_list
@@ -70,12 +68,15 @@ class GetRouteTargets(RouteTarget):
     def __call__(self, virtual_network_fqname=None):
         try:
             super(GetRouteTargets, self).__call__(virtual_network_fqname)
-            result = {}
+            result = {
+                "virtual_network_fqname": virtual_network_fqname
+            }
             for rt_policy in ['route_target_list', 'import_route_target_list', 'export_route_target_list']:
                 if rt_policy in self.vn and 'route_target' in self.vn[rt_policy]:
                     result[rt_policy] = self.vn[rt_policy]['route_target']
-            if result:
-                return json.dumps(result, indent=2)
+                else:
+                    result[rt_policy] = []
+            return json.dumps(result, indent=2)
         except ResourceNotFound:
             pass
         return json.dumps([])

@@ -427,6 +427,8 @@ class Provision(Command):
                 if k == option.dest:
                     if option.need_value:
                         if isinstance(v, list):
+                            if len(v) == 0:
+                                break
                             if option.kwargs.get('action') == 'append':
                                 for i in v:
                                     cmd_line.append(option.long_name)

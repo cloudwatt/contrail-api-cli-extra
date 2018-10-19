@@ -190,7 +190,7 @@ class RouteTargetAction(argparse.Action):
         elif isinstance(asn, unicode) and not 1 <= rt_num < pow(2, 16):
             raise argparse.ArgumentTypeError("With ASN as IPv4, the route target number must be contained between 1 and %d" % pow(2, 16))
 
-        return 'target:%s' % value
+        return value
 
 
 class ZKCommand(Command):
