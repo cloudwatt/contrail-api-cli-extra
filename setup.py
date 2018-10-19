@@ -18,7 +18,7 @@ if sys.version_info[0] == 2:
 
 setup(
     name='contrail-api-cli-extra',
-    version='0.5.5',
+    version='0.5.6',
     description="Supplementary commands for contrail-api-cli",
     author="Jean-Philippe Braun",
     author_email="jean-philippe.braun@cloudwatt.com",
