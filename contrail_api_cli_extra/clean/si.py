@@ -36,10 +36,11 @@ class CleanSIScheduling(CheckCommand, PathCommand):
         for vm in si.get('virtual_machine_back_refs', []):
             vm.fetch()
             if len(vm.get('virtual_router_back_refs', [])) > 1:
-                printo('SI %s VM %s is scheduled on %s' % (
-                    si.path,
-                    vm.uuid,
-                    ", ".join([str(vr.fq_name) for vr in vm['virtual_router_back_refs']])))
+                printo('SI %s VM %s is scheduled on %s' %
+                       (si.path, vm.uuid, ", ".join([
+                           str(vr.fq_name)
+                           for vr in vm['virtual_router_back_refs']
+                       ])))
                 if self.check is not True:
                     self._clean_vm(vm)
 
@@ -83,7 +84,8 @@ class CleanStaleSI(CheckCommand, PathCommand):
         """Return True if the lbaas SI is stale.
         """
 
-        if 'loadbalancer_pool_back_refs' not in si:
+        if ('loadbalancer_pool_back_refs' not in si or
+                len(si['loadbalancer_pool_back_refs']) == 0):
             printo('[%s] No pool attached to SI' % si.uuid)
             return True
 
@@ -111,7 +113,8 @@ class CleanStaleSI(CheckCommand, PathCommand):
         return False
 
     def _remove_back_ref(self, si, r1, r2):
-        printo('[%s] Remove back_ref from %s to %s' % (si.uuid, str(r1.path), str(r2.path)))
+        printo('[%s] Remove back_ref from %s to %s' % (si.uuid, str(r1.path),
+                                                       str(r2.path)))
         if not self.dry_run:
             r1.remove_back_ref(r2)
 
@@ -160,10 +163,12 @@ class CleanStaleSI(CheckCommand, PathCommand):
         try:
             si_t = si['service_template_refs'][0]
         except (KeyError, IndexError):
-            printo('[%s] SI %s has no template, skipping.' % (si.uuid, str(si.path)))
+            printo('[%s] SI %s has no template, skipping.' % (si.uuid,
+                                                              str(si.path)))
             return
 
-        if 'haproxy-loadbalancer-template' in si_t.fq_name and self._is_stale_lbaas(si):
+        if ('haproxy-loadbalancer-template' in si_t.fq_name and
+                self._is_stale_lbaas(si)):
             printo('[%s] Found stale lbaas %s' % (si.uuid, str(si.fq_name)))
             if self.check is not True:
                 self._clean_lbaas_si(si)
