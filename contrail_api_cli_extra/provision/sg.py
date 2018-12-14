@@ -24,8 +24,8 @@ def _remote_cidr_or_default(cidr):
 
 
 class SG(Command):
-    project_fqname = Option(required=True,
-                            help='Project fqname (eg: default-domain:admin)')
+    project_fqname = Option(default="default-domain:default-project",
+                            help='Project fqname (default: %(default)s)')
 
 
 class SGAction(SG):

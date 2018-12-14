@@ -12,8 +12,8 @@ from common import get_network_ipam_subnets
 
 
 class LR(Command):
-    project_fqname = Option(required=True,
-                            help='Project fqname (eg: default-domain:admin)')
+    project_fqname = Option(default="default-domain:default-project",
+                            help='Project fqname (default: %(default)s)')
 
 
 class LRAction(LR):
