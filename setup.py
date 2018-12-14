@@ -67,6 +67,9 @@ setup(
             'add-lr = contrail_api_cli_extra.provision.lr:AddLR',
             'del-lr = contrail_api_cli_extra.provision.lr:DelLR',
             'list-lr = contrail_api_cli_extra.provision.lr:ListLRs',
+            'add-sg = contrail_api_cli_extra.provision.sg:AddSG',
+            'del-sg = contrail_api_cli_extra.provision.sg:DelSG',
+            'list-sg = contrail_api_cli_extra.provision.sg:ListSGs',
         ],
         'contrail_api_cli.command': [
             'provision = contrail_api_cli_extra.provision.provision:Provision',
