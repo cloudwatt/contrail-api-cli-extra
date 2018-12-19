@@ -86,6 +86,7 @@ setup(
             'fix-ri = contrail_api_cli_extra.fix.ri:FixRI',
             'check-bad-refs = contrail_api_cli_extra.misc.check_bad_refs:CheckBadRefs',
             'manage-rt = contrail_api_cli_extra.misc.manage_rt:ManageRT',
+            'apply-sg = contrail_api_cli_extra.misc.apply_sg:ApplySG',
         ],
         'contrail_api_cli.migration': [
             'migrate-si = contrail_api_cli_extra.migration.si:MigrateSI110221',
