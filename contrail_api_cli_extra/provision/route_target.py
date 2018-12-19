@@ -22,16 +22,18 @@ class RouteTargetAction(RouteTarget):
     route_target_list = Option(nargs='+',
                                action=RouteTargetAction,
                                help="Imported and exported route target \
-                                     '<ASN>:<route target number>' (default: %(default)s)",
+                                    'target:<ASN>:<route target number>' (default: %(default)s)",
                                default=[])
     import_route_target_list = Option(nargs='+',
                                       action=RouteTargetAction,
-                                      help="Imported route target '<ASN>:<route target number>' (default: %(default)s) \
+                                      help="Imported route target \
+                                           'target:<ASN>:<route target number>' (default: %(default)s) \
                                             /!\\ Not supported until Contrail 3.0",
                                       default=[])
     export_route_target_list = Option(nargs='+',
                                       action=RouteTargetAction,
-                                      help="Exported route target '<ASN>:<route target number>' (default: %(default)s) \
+                                      help="Exported route target \
+                                           'target:<ASN>:<route target number>' (default: %(default)s) \
                                             /!\\ Not supported until Contrail 3.0",
                                       default=[])
 

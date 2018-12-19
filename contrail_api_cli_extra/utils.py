@@ -175,9 +175,9 @@ class RouteTargetAction(argparse.Action):
     @staticmethod
     def route_target_type(value):
         try:
-            _, asn, rt_num = value.split(':')
+            target, asn, rt_num = value.split(':')
         except ValueError:
-            raise argparse.ArgumentTypeError("A router target must be composed by an ASN and a number separated by the ':' character")
+            raise argparse.ArgumentTypeError("A route target must be composed by an ASN and a number separated by the ':' character: target:<ASN>:<NUMBER>")
 
         asn = RouteTargetAction.asn_type(asn)
 
@@ -185,6 +185,8 @@ class RouteTargetAction(argparse.Action):
             rt_num = int(rt_num)
         except ValueError:
             raise argparse.ArgumentTypeError("Route target number must be an integer")
+        if target != "target":
+            raise argparse.ArgumentTypeError("Route target must begin by 'target:'")
         if isinstance(asn, int) and not 1 <= rt_num < pow(2, 32):
             raise argparse.ArgumentTypeError("With ASN as integer, the route target number must be contained between 1 and %d" % pow(2, 32))
         elif isinstance(asn, unicode) and not 1 <= rt_num < pow(2, 16):
