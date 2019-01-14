@@ -172,6 +172,12 @@ class FixZkIP(ZKCommand, CheckCommand, PathCommand, ConfirmCommand):
                        .format(iip_ip, vn.fq_name))
                 logger.info(msg)
                 printo(msg)
+            except KeyError:
+                msg = ('instance ip {0} for virtual network {1} '
+                       'has no ip address. unable to check it.'
+                       .format(iip.uuid, vn.fq_name))
+                logger.info(msg)
+                printo(msg)
 
         for pool in vn.children.floating_ip_pool:
             try:
