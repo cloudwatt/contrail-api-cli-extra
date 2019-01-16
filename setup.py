@@ -103,6 +103,7 @@ setup(
             'clean-subnet = contrail_api_cli_extra.clean.subnet:CleanSubnet',
             'clean-refs = contrail_api_cli_extra.clean.refs:CleanRefs',
             'clean-fqn = contrail_api_cli_extra.clean.fqn:CleanFQN',
+            'clean-mandatory = contrail_api_cli_extra.clean.clean_obj_mandatory_fields:CleanObjMandatoryFields',
         ]
     },
     classifiers=[
