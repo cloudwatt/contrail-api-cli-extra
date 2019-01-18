@@ -23,6 +23,12 @@ def _remote_cidr_or_default(cidr):
     return cidr
 
 
+def _protocol_or_default(protocol):
+    if protocol == "any":
+        return ""
+    return protocol
+
+
 class SG(Command):
     project_fqname = Option(default="default-domain:default-project",
                             help='Project fqname (default: %(default)s)')
@@ -52,6 +58,10 @@ def rule_type(string):
             remote_cidr = "0.0.0.0/0"
     except netaddr.AddrFormatError:
         raise argparse.ArgumentTypeError('%s is not a network' % remote_cidr)
+    if not proto:
+        proto = "any"
+    elif proto == "any":
+        raise argparse.ArgumentTypeError('Use empty value instead of any for proto')
     if not port_min:
         port_min = 0
     elif port_min == 0:
@@ -150,13 +160,13 @@ class ListSGs(SG):
         rule = []
         if policy["src_addresses"][0]["security_group"] == "local":
             rule.append("egress")
-            rule.append(policy['protocol'])
+            rule.append(_protocol_or_default(policy['protocol']))
             rule.append(_port_or_default(policy["dst_ports"][0]["start_port"]))
             rule.append(_port_or_default(policy["dst_ports"][0]["end_port"]))
             rule.append(_remote_cidr_or_default("%s/%s" % (policy["dst_addresses"][0]["subnet"]["ip_prefix"], policy["dst_addresses"][0]["subnet"]["ip_prefix_len"])))
         else:
             rule.append("ingress")
-            rule.append(policy['protocol'])
+            rule.append(_protocol_or_default(policy['protocol']))
             rule.append(_port_or_default(policy["dst_ports"][0]["start_port"]))
             rule.append(_port_or_default(policy["dst_ports"][0]["end_port"]))
             rule.append(_remote_cidr_or_default("%s/%s" % (policy["src_addresses"][0]["subnet"]["ip_prefix"], policy["src_addresses"][0]["subnet"]["ip_prefix_len"])))
