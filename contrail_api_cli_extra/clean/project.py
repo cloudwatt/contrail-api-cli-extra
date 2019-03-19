@@ -113,6 +113,7 @@ class PurgeProject(ConfirmCommand):
     def __call__(self, paths=None, **kwargs):
         super(PurgeProject, self).__call__(**kwargs)
         self.actions = {
+            ChildrenExists: {},
             BackRefsExists: {
                 # we don't want to delete virtual-router objects
                 ('virtual-machine', 'virtual-router'): self._remove_back_ref,

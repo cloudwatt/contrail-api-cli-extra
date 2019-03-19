@@ -84,31 +84,35 @@ class CleanStaleSI(CheckCommand, PathCommand):
         """Return True if the lbaas SI is stale.
         """
 
-        if ('loadbalancer_pool_back_refs' not in si or
-                len(si['loadbalancer_pool_back_refs']) == 0):
-            printo('[%s] No pool attached to SI' % si.uuid)
+        if (('loadbalancer_pool_back_refs' not in si or
+                len(si['loadbalancer_pool_back_refs']) == 0) and
+                ('loadbalancer_back_refs' not in si or
+                 len(si['loadbalancer_back_refs']) == 0)):
+            printo('[%s] No pool or loadbalancer attached to SI' % si.uuid)
             return True
 
-        pool = si['loadbalancer_pool_back_refs'][0]
-        pool.fetch()
+        # lbaas v1
+        if 'loadbalancer_pool_back_refs' in si:
+            pool = si['loadbalancer_pool_back_refs'][0]
+            pool.fetch()
 
-        if 'virtual_ip_back_refs' not in pool:
-            printo('[%s] No VIP attached to pool' % si.uuid)
-            return True
+            if 'virtual_ip_back_refs' not in pool:
+                printo('[%s] No VIP attached to pool' % si.uuid)
+                return True
 
-        vip = pool['virtual_ip_back_refs'][0]
-        vip.fetch()
+            vip = pool['virtual_ip_back_refs'][0]
+            vip.fetch()
 
-        if 'virtual_machine_interface_refs' not in vip:
-            printo('[%s] No VMI for VIP' % si.uuid)
-            return True
+            if 'virtual_machine_interface_refs' not in vip:
+                printo('[%s] No VMI for VIP' % si.uuid)
+                return True
 
-        vip_vmi = vip['virtual_machine_interface_refs'][0]
-        vip_vmi.fetch()
+            vip_vmi = vip['virtual_machine_interface_refs'][0]
+            vip_vmi.fetch()
 
-        if 'instance_ip_back_refs' not in vip_vmi:
-            printo('[%s] No IIP found for VIP VMI' % si.uuid)
-            return True
+            if 'instance_ip_back_refs' not in vip_vmi:
+                printo('[%s] No IIP found for VIP VMI' % si.uuid)
+                return True
 
         return False
 
