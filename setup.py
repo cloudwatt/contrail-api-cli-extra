@@ -93,6 +93,7 @@ setup(
             'migrate-host-routes = contrail_api_cli_extra.migration.host_routes:MigrateHostRoutes',
             'migrate-rt = contrail_api_cli_extra.migration.rt:MigrateRT22132',
             'migrate-lb = contrail_api_cli_extra.migration.lb:MigrateLB22132',
+            'migrate-bgpvpn-legacy = contrail_api_cli_extra.migration.bgpvpn:MigrateToBGPVPNLegacy',
         ],
         'contrail_api_cli.clean': [
             'purge-project = contrail_api_cli_extra.clean.project:PurgeProject',
